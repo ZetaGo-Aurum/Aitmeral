@@ -32,7 +32,7 @@ function findAureus(pythonCmd) {
 
 function installAureus(pythonCmd) {
   console.log('📦 Installing AITMERAL via pip...');
-  const pipCmd = `${pythonCmd} -m pip install aitmeral-enhancer`;
+  const pipCmd = `${pythonCmd} -m pip install aitmeral`;
   const child = spawn(pipCmd, { shell: true, stdio: 'inherit' });
   
   return new Promise((resolve, reject) => {
@@ -51,8 +51,8 @@ async function main() {
   const args = process.argv.slice(2);
   
   if (args.includes('--version') || args.includes('-V')) {
-    console.log('aitmeral (npm wrapper) v2.1.0');
-    console.log('Python package: aitmeral-enhancer@2.1.0');
+    console.log('aitmeral (npm wrapper) v1.0.0');
+    console.log('Python package: aitmeral@1.0.0');
     return;
   }
   
@@ -77,9 +77,9 @@ Commands:
   aitmeral --version    Show version
 
 Installation:
-  npm install -g aitmeral-enhancer
-  pip install aitmeral-enhancer
-  bash <(curl -fsSL https://raw.githubusercontent.com/zetagoaurum/Aitmeral/main/install-universal.sh)
+  npm install -g aitmeral-enhancer     # Global install (this wrapper)
+  pip install aitmeral        # Direct Python install
+  bash <(curl -fsSL https://raw.githubusercontent.com/zetagoaurum/Aitmeral/main/install.sh)
 
 The npm wrapper will auto-install the Python package on first run.
 `);
@@ -101,7 +101,7 @@ The npm wrapper will auto-install the Python package on first run.
       await installAureus(pythonCmd);
     } catch (err) {
       console.error('❌ Failed to install AITMERAL:', err.message);
-      console.error('   Try manually: pip install aitmeral-enhancer');
+      console.error('   Try manually: pip install aitmeral');
       process.exit(1);
     }
   }

@@ -38,18 +38,10 @@ def _get_pil_image():
 
 
 def check_ai_dependencies(engine: str) -> tuple[bool, str]:
-    is_termux = bool(os.environ.get("TERMUX_VERSION") or os.environ.get("PREFIX", "").startswith("/data/data/com.termux"))
-    try:
-        import torch
-    except ImportError:
-        if is_termux:
-            return False, (
-                "PyTorch missing on Android (Termux). Install PyTorch from "
-                "https://github.com/xuancong84/install-PyTorch-on-Android or build with Vulkan support: "
-                "https://docs.pytorch.org/tutorials/unstable/vulkan_workflow.html"
-            )
-        return False, "PyTorch is missing. Please install torch and torchvision."
-
+    """
+    Check if AI engine dependencies are installed.
+    Returns (available, error_message).
+    """
     if engine == "mmagic":
         try:
             import mmengine
@@ -70,6 +62,7 @@ def check_ai_dependencies(engine: str) -> tuple[bool, str]:
 
 @dataclass
 class AIEngineConfig:
+    """Configuration for AI engine"""
     name: str
     model: str
     scale: int = 4
@@ -78,7 +71,6 @@ class AIEngineConfig:
     pre_pad: int = 0
     fp32: bool = False
     gpu_id: int = 0
-    device: str = "auto"
     out_ext: str = "png"
     extra_args: Dict[str, Any] = None
 
@@ -127,29 +119,16 @@ class AIEngineBase(ABC):
         pass
     
     def _get_device(self):
-        target = str(getattr(self.config, "device", "auto") or "auto").lower()
+        """Get torch device (cuda/mps/cpu)"""
         try:
             import torch
-            if target == "cuda" and torch.cuda.is_available():
+            if torch.cuda.is_available():
                 return torch.device(f"cuda:{self.config.gpu_id}")
-            if target == "mps" and hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
                 return torch.device("mps")
-            if target == "vulkan" and hasattr(torch, 'is_vulkan_available') and torch.is_vulkan_available():
-                return torch.device("vulkan")
-            if target == "cpu":
-                return torch.device("cpu")
-            if target == "auto":
-                if torch.cuda.is_available():
-                    return torch.device(f"cuda:{self.config.gpu_id}")
-                if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
-                    return torch.device("mps")
-                if hasattr(torch, 'is_vulkan_available') and torch.is_vulkan_available():
-                    return torch.device("vulkan")
-                return torch.device("cpu")
-            return torch.device(target)
         except Exception:
             pass
-        return "cpu"
+        return torch.device("cpu") if 'torch' in globals() else "cpu"
     
     def _read_image(self, path: str) -> _get_np().ndarray:
         """Read image as RGB numpy array"""
@@ -359,45 +338,20 @@ class RealESRGANEngine(AIEngineBase):
             
             config = model_configs.get(model_name, model_configs["realesrgan-x4plus"])
             
+            # Download weights if not exist
             self._ensure_weights(config["model_path"])
             
-            device = self._get_device()
-            self._device = device
-            is_vulkan = str(device) == "vulkan" or (hasattr(device, "type") and device.type == "vulkan")
-            use_half = (not self.config.fp32) and (not is_vulkan) and (str(device) != "cpu")
-
-            try:
-                self._upsampler = RealESRGANer(
-                    scale=config["scale"],
-                    model_path=config["model_path"],
-                    model=config["model"],
-                    tile=self.config.tile_size,
-                    tile_pad=self.config.tile_pad,
-                    pre_pad=self.config.pre_pad,
-                    half=use_half,
-                    device=device,
-                )
-                return True
-            except Exception as e:
-                if is_vulkan:
-                    try:
-                        import torch
-                        self._device = torch.device("cpu")
-                        self._upsampler = RealESRGANer(
-                            scale=config["scale"],
-                            model_path=config["model_path"],
-                            model=config["model"],
-                            tile=self.config.tile_size,
-                            tile_pad=self.config.tile_pad,
-                            pre_pad=self.config.pre_pad,
-                            half=False,
-                            device=self._device,
-                        )
-                        return True
-                    except Exception:
-                        pass
-                print(f"Real-ESRGAN load failed: {e}")
-                return False
+            self._upsampler = RealESRGANer(
+                scale=config["scale"],
+                model_path=config["model_path"],
+                model=config["model"],
+                tile=self.config.tile_size,
+                tile_pad=self.config.tile_pad,
+                pre_pad=self.config.pre_pad,
+                half=not self.config.fp32,
+                device=self._get_device(),
+            )
+            return True
             
         except Exception as e:
             print(f"Real-ESRGAN load failed: {e}")
@@ -422,25 +376,13 @@ class RealESRGANEngine(AIEngineBase):
     def enhance_image(self, input_path: str, output_path: str) -> ProcessResult:
         try:
             img = self._read_image(input_path)
-            try:
-                output, _ = self._upsampler.enhance(img, outscale=self.config.scale)
-            except Exception as e:
-                is_vulkan = str(self._device) == "vulkan" or (hasattr(self._device, "type") and self._device.type == "vulkan")
-                if is_vulkan:
-                    import torch
-                    self._device = torch.device("cpu")
-                    if hasattr(self._upsampler, "device"):
-                        self._upsampler.device = self._device
-                    if hasattr(self._upsampler, "model"):
-                        self._upsampler.model.to(self._device)
-                    output, _ = self._upsampler.enhance(img, outscale=self.config.scale)
-                else:
-                    raise e
+            output, _ = self._upsampler.enhance(img, outscale=self.config.scale)
             self._write_image(output, output_path)
+            
             return ProcessResult(
                 output_path=output_path,
                 success=True,
-                metadata={"model": self.config.model, "scale": self.config.scale, "device": str(self._device)}
+                metadata={"model": self.config.model, "scale": self.config.scale}
             )
         except Exception as e:
             return ProcessResult(output_path="", success=False, error=str(e))

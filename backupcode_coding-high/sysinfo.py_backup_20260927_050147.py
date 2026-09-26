@@ -212,48 +212,7 @@ def get_caps(refresh: bool = False) -> Caps:
         return _CAPS_CACHE
 
 
-def is_vulkan_available() -> bool:
-    try:
-        import torch
-        if hasattr(torch, "is_vulkan_available") and torch.is_vulkan_available():
-            return True
-    except Exception:
-        pass
-    if shutil.which("vulkaninfo"):
-        try:
-            res = subprocess.run(["vulkaninfo", "--summary"], capture_output=True, text=True, timeout=5)
-            if res.returncode == 0:
-                return True
-        except Exception:
-            pass
-    if platform_key() == "termux":
-        import glob
-        for p in ("/system/lib64/libvulkan.so", "/system/lib/libvulkan.so", "/vendor/lib64/hw/vulkan*.so"):
-            if glob.glob(p):
-                return True
-    return False
-
-
-def get_pytorch_info() -> dict:
-    info = {
-        "installed": False,
-        "version": "",
-        "cuda": False,
-        "mps": False,
-        "vulkan": False,
-    }
-    try:
-        import torch
-        info["installed"] = True
-        info["version"] = getattr(torch, "__version__", "unknown")
-        info["cuda"] = bool(torch.cuda.is_available())
-        info["mps"] = bool(hasattr(torch.backends, "mps") and torch.backends.mps.is_available())
-        info["vulkan"] = bool(hasattr(torch, "is_vulkan_available") and torch.is_vulkan_available())
-    except Exception:
-        pass
-    return info
-
-
+# ---------------------------------------------------------------- report
 def system_report() -> "tuple[list, bool]":
     """Build the `aitmeral doctor` report. Returns (rows, healthy)."""
     ff = ffmpeg_path()
@@ -271,26 +230,6 @@ def system_report() -> "tuple[list, bool]":
         ("ffprobe", ("OK — " + fp) if fp else "NOT FOUND — ships with every ffmpeg package"),
         ("yt-dlp", (f"OK — {binary_version(ytd)}" if ytd else "NOT FOUND (URL download disabled) — install: pip install yt-dlp (or brew/winget)")),
     ]
-
-    pt = get_pytorch_info()
-    if pt["installed"]:
-        accels = []
-        if pt["cuda"]:
-            accels.append("CUDA")
-        if pt["mps"]:
-            accels.append("MPS")
-        if pt["vulkan"]:
-            accels.append("Vulkan")
-        acc_str = ", ".join(accels) if accels else "CPU only"
-        rows.append(("PyTorch", f"v{pt['version']} ({acc_str})"))
-    else:
-        if platform_key() == "termux":
-            rows.append(("PyTorch", "NOT INSTALLED (Termux: https://github.com/xuancong84/install-PyTorch-on-Android)"))
-        else:
-            rows.append(("PyTorch", "NOT INSTALLED (pip install torch torchvision)"))
-
-    vulkan_ready = is_vulkan_available()
-    rows.append(("Vulkan", "Available" if vulkan_ready else "Not detected"))
 
     if ff:
         enc_bits, fil_bits = [], []

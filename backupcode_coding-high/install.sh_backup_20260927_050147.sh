@@ -57,10 +57,10 @@ check_bin yt-dlp "opsional (fitur URL): pip install yt-dlp"
 
 echo
 echo -e "${CYN}▸ Memasang AITMERAL via pip…${RST}"
-if $PY -m pip install aitmeral-enhancer 2>/dev/null || $PY -m pip install --user aitmeral-enhancer; then
+if $PY -m pip install aitmeral 2>/dev/null || $PY -m pip install --user aitmeral; then
   echo -e "${GRN}✓ Terpasang.${RST}"
 else
-  echo -e "${CYN}! pip install gagal — coba manual: ${RST}pip install --user aitmeral-enhancer"
+  echo -e "${CYN}! pip install gagal — coba manual: ${RST}pip install --user aitmeral"
   exit 1
 fi
 

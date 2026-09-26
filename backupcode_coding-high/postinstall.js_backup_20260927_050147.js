@@ -26,11 +26,11 @@ if (!pythonCmd) {
 console.log(`🐍 Found Python: ${pythonCmd}`);
 
 try {
-  execSync(`${pythonCmd} -m pip install aitmeral-enhancer`, { stdio: 'inherit' });
+  execSync(`${pythonCmd} -m pip install aitmeral`, { stdio: 'inherit' });
   console.log('✅ AITMERAL installed successfully!');
 } catch (err) {
   console.log('⚠️  Auto-install skipped. Run "aitmeral" to install on first use.');
-  console.log('   Or manually: pip install aitmeral-enhancer');
+  console.log('   Or manually: pip install aitmeral');
 }
 
 console.log('');

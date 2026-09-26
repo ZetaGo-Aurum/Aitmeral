@@ -24,7 +24,7 @@ HAS_CUDA=false
 HAS_MPS=false
 EXTERNALLY_MANAGED=false
 
-if [ -n "$TERMUX_VERSION" ] || ([ -n "$PREFIX" ] && [[ "$PREFIX" == *com.termux* ]]); then
+if [ -n "$TERMUX_VERSION" ] || [ -n "$PREFIX" ] && [[ "$PREFIX" == *com.termux* ]]; then
     IS_TERMUX=true
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     IS_MACOS=true
@@ -34,55 +34,35 @@ elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]] || [[ -n "$WINDIR"
     IS_WINDOWS=true
 fi
 
-if command -v python3 >/dev/null 2>&1; then
-    PY=python3
-elif command -v python >/dev/null 2>&1; then
-    PY=python
-else
-    PY="python3"
-fi
-
-HAS_CUDA=false
+# Check for CUDA
 if command -v nvidia-smi >/dev/null 2>&1; then
     HAS_CUDA=true
 fi
 
-HAS_MPS=false
+# Check for MPS (Apple Silicon)
 if [ "$IS_MACOS" = true ] && [[ "$(uname -m)" == "arm64" ]]; then
     HAS_MPS=true
 fi
 
-HAS_VULKAN=false
-if command -v vulkaninfo >/dev/null 2>&1 || [ -f "/system/lib64/libvulkan.so" ] || [ -f "/system/lib/libvulkan.so" ]; then
-    HAS_VULKAN=true
-fi
-
+# Check for externally-managed-environment (Arch, Fedora, etc.)
 if $PY -m pip install --help 2>&1 | grep -q "externally-managed-environment" 2>/dev/null || \
-   $PY -c "import sysconfig; print(sysconfig.get_config_var('EXTERNALLY_MANAGED'))" 2>/dev/null | grep -q "1" 2>/dev/null; then
+   python3 -c "import sysconfig; print(sysconfig.get_config_var('EXTERNALLY_MANAGED'))" 2>/dev/null | grep -q "1" 2>/dev/null; then
     EXTERNALLY_MANAGED=true
 fi
 
 echo -e "${CYN}🔍 Platform detection:${RST}"
-[ "$IS_TERMUX" = true ] && echo -e "   Platform: Termux (Android)"
+[ "$IS_TERMUX" = true ] && echo -e "   Platform: Termux (ARM)"
 [ "$IS_MACOS" = true ] && echo -e "   Platform: macOS $(uname -m)" && [ "$HAS_MPS" = true ] && echo -e "   ${GRN}✓ Apple Silicon (MPS support)${RST}"
-[ "$IS_LINUX" = true ] && echo -e "   Platform: Linux" && [ "$HAS_CUDA" = true ] && echo -e "   ${GRN}✓ NVIDIA CUDA detected${RST}" || echo -e "   ${DIM}No CUDA GPU${RST}"
+[ "$IS_LINUX" = true ] && echo -e "   Platform: Linux" && [ "$HAS_CUDA" = true ] && echo -e "   ${GRN}✓ NVIDIA CUDA detected${RST}" || echo -e "   ${DIM}No CUDA GPU (CPU mode)${RST}"
 [ "$IS_WINDOWS" = true ] && echo -e "   Platform: Windows"
-[ "$HAS_VULKAN" = true ] && echo -e "   ${GRN}✓ Vulkan support detected${RST}"
-[ "$EXTERNALLY_MANAGED" = true ] && echo -e "   ${CYN}🔒 Externally managed Python detected — will use --break-system-packages${RST}"
+[ "$EXTERNALLY_MANAGED" = true ] && echo -e "   ${CYN}🔒 Externally managed Python detected (Arch/Fedora) — will use --break-system-packages${RST}"
 echo
 
+# Determine AI install strategy
 AI_INSTALL="none"
 if [ "$IS_TERMUX" = true ]; then
-    if $PY -c "import torch; exit(0 if getattr(torch, 'is_vulkan_available', lambda: False)() else 1)" 2>/dev/null; then
-        AI_INSTALL="termux-vulkan"
-        echo -e "${GRN}📱 Termux: PyTorch with Vulkan GPU acceleration detected!${RST}"
-    elif $PY -c "import torch" 2>/dev/null; then
-        AI_INSTALL="termux-cpu"
-        echo -e "${CYN}📱 Termux: PyTorch detected (CPU mode).${RST}"
-    else
-        AI_INSTALL="termux-setup"
-        echo -e "${CYN}📱 Termux: PyTorch not installed yet. Installer will provide setup instructions.${RST}"
-    fi
+    AI_INSTALL="none"
+    echo -e "${CYN}📱 Termux: AI engines not available (no torch for ARM)${RST}"
 elif [ "$HAS_CUDA" = true ]; then
     AI_INSTALL="full"
     echo -e "${GRN}🚀 CUDA GPU detected — installing FULL AI stack (MMagic + Real-ESRGAN)${RST}"
@@ -167,23 +147,8 @@ install_ai_dependencies() {
             pip_install "basicsr" "facexlib" "gfpgan"
             pip_install "realesrgan @ git+https://github.com/xinntao/Real-ESRGAN.git@master"
             ;;
-        "termux-vulkan"|"termux-cpu")
-            echo -e "${CYN}📦 Setting up AI packages for Termux...${RST}"
-            pip_install "basicsr" "facexlib" "gfpgan" 2>/dev/null || true
-            pip_install "realesrgan @ git+https://github.com/xinntao/Real-ESRGAN.git@master" 2>/dev/null || true
-            ;;
-        "termux-setup")
-            echo -e "${CYN}📱 PyTorch setup for Android (Termux):${RST}"
-            echo -e "  1. Install compilation tools in Termux:"
-            echo -e "     pkg install -y python clang libjpeg-turbo libpng vulkan-tools vulkan-loader-android"
-            echo -e "  2. Install PyTorch built for Android:"
-            echo -e "     git clone https://github.com/xuancong84/install-PyTorch-on-Android.git"
-            echo -e "     (Follow repository instructions to install torch wheel)"
-            echo -e "  3. Refer to PyTorch Vulkan workflow for GPU acceleration:"
-            echo -e "     https://docs.pytorch.org/tutorials/unstable/vulkan_workflow.html"
-            ;;
         "none")
-            echo -e "${CYN}⏭ Skipping AI engines${RST}"
+            echo -e "${CYN}⏭ Skipping AI engines (not supported on this platform)${RST}"
             ;;
     esac
 }
@@ -260,12 +225,12 @@ check_bin yt-dlp "optional: pip install yt-dlp"
 # Platform-specific notes
 if [ "$IS_TERMUX" = true ]; then
     echo
-    echo -e "${CYN}📱 Termux (Android) Notes & Vulkan Acceleration:${RST}"
-    echo "  • PyTorch Android installer: https://github.com/xuancong84/install-PyTorch-on-Android.git"
-    echo "  • PyTorch Vulkan workflow: https://docs.pytorch.org/tutorials/unstable/vulkan_workflow.html"
-    echo "  • Install Vulkan loader: pkg install vulkan-tools vulkan-loader-android"
-    echo "  • Check status: aitmeral doctor"
-    echo "  • Run AI upscale on Vulkan: aitmeral convert image.jpg -p ai-realesrgan-x4 --ai-device vulkan"
+    echo -e "${CYN}📱 Termux Notes:${RST}"
+    echo "  • AI engines require torch (not available on ARM/Termux)"
+    echo "  • Traditional ffmpeg-based conversion works fully"
+    echo "  • For AI features, use Linux/macOS/Windows with CUDA GPU"
+    echo "  • Install ffmpeg: pkg install ffmpeg"
+    echo "  • Install yt-dlp: pip install yt-dlp"
 fi
 
 if [ "$HAS_CUDA" = true ]; then

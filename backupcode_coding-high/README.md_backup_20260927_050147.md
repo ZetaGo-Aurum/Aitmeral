@@ -253,7 +253,6 @@ aitmeral convert input.mp4 --mode auto -p ai-mmagic-basicvsr-x4
 | `--ai-tile` | `0-2048` | Tile size untuk image besar (0=auto) |
 | `--ai-fp32` | flag | Gunakan FP32 instead of FP16 |
 | `--ai-gpu` | `0-7` | GPU device ID (default: 0) |
-| `--ai-device` | `auto\|cuda\|mps\|vulkan\|cpu` | AI inference device (default: auto). Use `vulkan` for Android Termux Vulkan acceleration. |
 
 ---
 
@@ -342,13 +341,9 @@ aitmeral convert input.mp4 --mode auto -p ai-mmagic-basicvsr-x4
 | Playback FFV1/Y4M gagal | Codec arsip — putar VLC/mpv/ffplay, atau konversi ke `superhd` |
 | Port 8765 terpakai | `aitmeral server --port 9000` |
 | **AI: CUDA out of memory** | Kurangi `--ai-tile 256` atau `--ai-fp32` / `--ai-scale 2` |
-| **AI: Vulkan not detected** | Pastikan PyTorch Vulkan build; `aitmeral doctor` akan cek. Gunakan `--ai-device vulkan` di Termux. |
-| **AI: CUDA out of memory** | Kurangi `--ai-tile 256` atau `--ai-fp32` / `--ai-scale 2` |
 | **AI: mmagic not found** | `pip install "aitmeral-enhancer[mmagic]"` |
 | **AI: realesrgan not found** | `pip install "aitmeral-enhancer[realesrgan]"` |
 | **AI: MMCV compile error** | Install build tools: `sudo apt install build-essential cmake` |
-| **Termux: PyTorch not installed** | `pip install torch` tidak tersedia. Lihat: https://github.com/xuancong84/install-PyTorch-on-Android |
-| **Termux: Vulkan not working** | Verifikasi `vulkaninfo` dan `pkg install vulkan-tools`. Cek `aitmeral doctor` output. |
 
 ---
 
@@ -388,5 +383,5 @@ aitmeral/
 MIT License. Gunakan hanya untuk konten yang Anda miliki haknya — mengunduh materi berhak cipta dari YouTube/situs lain tanpa izin dapat melanggar ketentuan layanan mereka dan hukum yang berlaku.
 
 <div align="center">
-<sub>AITMERAL v2.1.0 — dibangun di atas <b>ffmpeg</b>, <b>yt-dlp</b>, <b>Textual</b>, <b>rich</b>, <b>PyTorch</b>, <b>MMagic</b>, <b>Real-ESRGAN</b></sub>
+<sub>AITMERAL v2.0.0 — dibangun di atas <b>ffmpeg</b>, <b>yt-dlp</b>, <b>Textual</b>, <b>rich</b>, <b>PyTorch</b>, <b>MMagic</b>, <b>Real-ESRGAN</b></sub>
 </div>

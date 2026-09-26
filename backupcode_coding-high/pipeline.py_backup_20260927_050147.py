@@ -135,7 +135,6 @@ def run_ai_image_job(source: str, settings: Settings, output_dir: str,
             tile_size=ai_config["tile"],
             fp32=ai_config["fp32"],
             gpu_id=ai_config["gpu_id"],
-            device=ai_config.get("device", "auto"),
         )
         
         if not engine.load_model():
@@ -210,7 +209,6 @@ def run_ai_video_job(source: str, settings: Settings, output_dir: str,
             tile_size=ai_config["tile"],
             fp32=ai_config["fp32"],
             gpu_id=ai_config["gpu_id"],
-            device=ai_config.get("device", "auto"),
         )
         
         if not engine.load_model():

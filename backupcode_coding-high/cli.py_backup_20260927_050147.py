@@ -19,7 +19,7 @@ from aitmeral.core import media, pipeline, sysinfo
 from aitmeral.core.options import (
     AUDIO_MODES, CHROMA_MODES, DEPTH_MODES, FPS_MODES, SCALERS, SHADERS,
     TONE_MAP_MODES, Settings, HWACCEL_MODES,
-    AI_ENGINES, AI_DEVICES, MMAGIC_MODELS, REALESRGAN_MODELS, PROCESS_MODES,
+    AI_ENGINES, MMAGIC_MODELS, REALESRGAN_MODELS, PROCESS_MODES,
 )
 from aitmeral.core.presets import get_preset, preset_summaries
 
@@ -136,8 +136,6 @@ def add_common(p: argparse.ArgumentParser):
                           help="use FP32 instead of FP16 (more memory, more precision)")
     ai_group.add_argument("--ai-gpu", type=int, default=0,
                           help="GPU device ID (default: 0)")
-    ai_group.add_argument("--ai-device", default="auto", choices=AI_DEVICES,
-                          help="AI inference device: auto | cuda | mps | vulkan | cpu (default: auto)")
 
 
 def settings_from_args(args) -> Settings:
@@ -168,7 +166,6 @@ def settings_from_args(args) -> Settings:
     s.ai_tile = args.ai_tile
     s.ai_fp32 = args.ai_fp32
     s.ai_gpu_id = args.ai_gpu
-    s.ai_device = getattr(args, "ai_device", "auto")
     
     _parse_effects(args.effects, s)
     return s

@@ -27,7 +27,6 @@ REALESRGAN_MODELS = [
     "realesrgan-x4plus", "realesrgan-x2plus",
     "realesrgan-anime-x4", "realesrgan-video-x4"
 ]
-AI_DEVICES = ["auto", "cuda", "mps", "vulkan", "cpu"]
 PROCESS_MODES = ["video", "image", "auto"]
 
 
@@ -97,13 +96,13 @@ class Settings:
     force: bool = False              # bypass the 8 GB RAM requirement
     extra_args: str = ""             # raw extra ffmpeg args (advanced)
 
-    ai_engine: str = "mmagic"
-    ai_model: str = "realesrgan-x4plus"
-    ai_scale: int = 4
-    ai_tile: int = 0
-    ai_fp32: bool = False
-    ai_gpu_id: int = 0
-    ai_device: str = "auto"
+    # AI Engine settings (NEW in v2)
+    ai_engine: str = "mmagic"        # mmagic | realesrgan | off
+    ai_model: str = "realesrgan-x4plus"  # model name
+    ai_scale: int = 4                # 2, 4, 8
+    ai_tile: int = 0                 # tile size (0 = auto)
+    ai_fp32: bool = False            # use fp32 instead of fp16
+    ai_gpu_id: int = 0               # GPU device ID
 
     # ------------------------------------------------------------------ io
     @staticmethod
@@ -158,7 +157,6 @@ class Settings:
         s.ai_tile = _clamp(_to_int(s.ai_tile, 0), 0, 2048)
         s.ai_fp32 = _to_bool(s.ai_fp32)
         s.ai_gpu_id = _clamp(_to_int(s.ai_gpu_id, 0), 0, 7)
-        s.ai_device = str(s.ai_device).strip().lower() if str(s.ai_device).strip().lower() in AI_DEVICES else "auto"
         return s
 
     def to_dict(self) -> dict:
@@ -208,6 +206,7 @@ class Settings:
         return False
 
     def get_ai_config(self) -> dict:
+        """Get AI engine configuration as dict"""
         return {
             "engine": self.ai_engine,
             "model": self.ai_model,
@@ -215,7 +214,6 @@ class Settings:
             "tile": self.ai_tile,
             "fp32": self.ai_fp32,
             "gpu_id": self.ai_gpu_id,
-            "device": self.ai_device,
         }
 
     def describe(self) -> str:
