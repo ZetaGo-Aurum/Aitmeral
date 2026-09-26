@@ -38,18 +38,16 @@ dependencies = [
 
 [project.optional-dependencies]
 youtube = ["yt-dlp"]
-# Primary AI engine (mmagic)
+# Primary AI engine (mmagic) - install via: pip install "aitmeral-enhancer[mmagic]"
 mmagic = [
   "mmcv>=2.0.1",
   "mmengine>=0.10",
-  "mmagic @ git+https://github.com/open-mmlab/mmagic.git@main",
 ]
-# Alternative AI engine (Real-ESRGAN)
+# Alternative AI engine (Real-ESRGAN) - install via: pip install "aitmeral-enhancer[realesrgan]"
 realesrgan = [
-  "realesrgan @ git+https://github.com/xinntao/Real-ESRGAN.git@master",
-  "basicsr @ git+https://github.com/xinntao/BasicSR.git@master",
-  "facexlib @ git+https://github.com/xinntao/facexlib.git@master",
-  "gfpgan @ git+https://github.com/TencentARC/GFPGAN.git@master",
+  "basicsr",
+  "facexlib",
+  "gfpgan",
 ]
 # All AI engines
 ai = ["mmagic", "realesrgan"]
