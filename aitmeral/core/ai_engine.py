@@ -10,9 +10,31 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, List, Tuple, Dict, Any
 
-import cv2
-import numpy as np
-from PIL import Image
+# Lazy imports - only imported when AI engine is actually used
+_cv2 = None
+_np = None
+_pil_image = None
+
+def _get_cv2():
+    global _cv2
+    if _cv2 is None:
+        import cv2
+        _cv2 = cv2
+    return _cv2
+
+def _get_np():
+    global _np
+    if _np is None:
+        import numpy as np
+        _np = np
+    return _np
+
+def _get_pil_image():
+    global _pil_image
+    if _pil_image is None:
+        from PIL import Image
+        _pil_image = Image
+    return _pil_image
 
 
 @dataclass
@@ -85,32 +107,32 @@ class AIEngineBase(ABC):
             pass
         return torch.device("cpu") if 'torch' in globals() else "cpu"
     
-    def _read_image(self, path: str) -> np.ndarray:
+    def _read_image(self, path: str) -> _get_np().ndarray:
         """Read image as RGB numpy array"""
-        img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+        img = _get_cv2().imread(path, _get_cv2().IMREAD_UNCHANGED)
         if img is None:
             raise ValueError(f"Cannot read image: {path}")
         if img.shape[2] == 4:
-            img = cv2.cvtColor(img, cv2.COLOR_BGRA2RGBA)
+            img = _get_cv2().cvtColor(img, _get_cv2().COLOR_BGRA2RGBA)
         else:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = _get_cv2().cvtColor(img, _get_cv2().COLOR_BGR2RGB)
         return img
     
-    def _write_image(self, img: np.ndarray, path: str):
+    def _write_image(self, img: _get_np().ndarray, path: str):
         """Write RGB/RGBA numpy array to file"""
         if img.shape[2] == 4:
-            img = cv2.cvtColor(img, cv2.COLOR_RGBA2BGRA)
+            img = _get_cv2().cvtColor(img, _get_cv2().COLOR_RGBA2BGRA)
         else:
-            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        cv2.imwrite(path, img)
+            img = _get_cv2().cvtColor(img, _get_cv2().COLOR_RGB2BGR)
+        _get_cv2().imwrite(path, img)
     
     def _video_to_frames(self, video_path: str, output_dir: str) -> Tuple[List[str], float, int, int]:
         """Extract frames from video. Returns (frame_paths, fps, width, height)"""
-        cap = cv2.VideoCapture(video_path)
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        cap = _get_cv2().VideoCapture(video_path)
+        fps = cap.get(_get_cv2().CAP_PROP_FPS)
+        width = int(cap.get(_get_cv2().CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(_get_cv2().CAP_PROP_FRAME_HEIGHT))
+        total_frames = int(cap.get(_get_cv2().CAP_PROP_FRAME_COUNT))
         
         frame_paths = []
         frame_idx = 0
@@ -120,7 +142,7 @@ class AIEngineBase(ABC):
             if not ret:
                 break
             frame_path = os.path.join(output_dir, f"frame_{frame_idx:06d}.png")
-            cv2.imwrite(frame_path, frame)
+            _get_cv2().imwrite(frame_path, frame)
             frame_paths.append(frame_path)
             frame_idx += 1
             
@@ -133,11 +155,11 @@ class AIEngineBase(ABC):
     def _frames_to_video(self, frame_paths: List[str], output_path: str, fps: float, 
                          width: int, height: int, codec: str = "mp4v"):
         """Combine frames into video"""
-        fourcc = cv2.VideoWriter_fourcc(*codec)
-        out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+        fourcc = _get_cv2().VideoWriter_fourcc(*codec)
+        out = _get_cv2().VideoWriter(output_path, fourcc, fps, (width, height))
         
         for i, frame_path in enumerate(frame_paths):
-            frame = cv2.imread(frame_path)
+            frame = _get_cv2().imread(frame_path)
             if frame is not None:
                 out.write(frame)
             if progress_callback:
