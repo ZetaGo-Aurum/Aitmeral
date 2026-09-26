@@ -1,0 +1,82 @@
+name: Publish to PyPI and npm
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.0.1)'
+        required: true
+        type: string
+
+jobs:
+  publish-pypi:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip build twine
+      
+      - name: Build package
+        run: python -m build
+      
+      - name: Check distribution
+        run: twine check dist/*
+      
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+  publish-npm:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Configure npm
+        run: npm config set //registry.npmjs.org/:_authToken ${{ secrets.NPM_TOKEN }}
+      
+      - name: Publish npm wrapper
+        working-directory: ./npm-wrapper
+        run: |
+          npm version ${{ github.event.inputs.version || github.ref_name }} --no-git-tag-version
+          npm publish --access public
+
+  create-install-scripts:
+    name: Update install scripts
+    runs-on: ubuntu-latest
+    needs: [publish-pypi, publish-npm]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Update version in install scripts
+        run: |
+          VERSION="${{ github.event.inputs.version || github.ref_name }}"
+          sed -i "s/v1\.0\.0/v$VERSION/g" install.sh install-universal.sh npm-wrapper/install-npm.sh
+      
+      - name: Commit updated scripts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add install.sh install-universal.sh npm-wrapper/install-npm.sh
+          git diff --staged --quiet || git commit -m "chore: update install scripts to v${{ github.event.inputs.version || github.ref_name }}"
+          git push

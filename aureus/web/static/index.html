@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AUREUS — Video Enhancer &amp; Upscaler</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+:root{
+  --bg:#07090d; --bg2:#0b0e16; --card:#0e121d; --card2:#111624;
+  --line:rgba(255,255,255,.075); --line2:rgba(255,255,255,.14);
+  --txt:#e9ecf4; --mut:#9aa3b8; --dim:#6b7490;
+  --gold:#f0c76a; --gold2:#d4a53f; --gold3:#8f6a1f;
+  --grad:linear-gradient(135deg,#f7dc9a,#e3b455 45%,#a87625);
+  --ok:#7ddc9a; --warn:#f2c14e; --err:#f28c8c;
+  --r:16px; --rs:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scrollbar-color:#2a3145 transparent}
+body{
+  background:
+    radial-gradient(1200px 500px at 85% -10%, rgba(212,165,63,.10), transparent 60%),
+    radial-gradient(900px 420px at -10% 0%, rgba(120,140,255,.05), transparent 55%),
+    var(--bg);
+  color:var(--txt);
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Inter,Arial,sans-serif;
+  min-height:100vh; font-size:15px; line-height:1.45;
+}
+a{color:var(--gold);text-decoration:none}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 20px 80px}
+
+/* ---------- header ---------- */
+header{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:6px 2px 20px}
+.logo{display:flex;align-items:center;gap:13px}
+.logo svg{width:46px;height:46px;filter:drop-shadow(0 0 14px rgba(240,199,106,.35))}
+.brand h1{
+  font-size:26px;letter-spacing:.34em;font-weight:800;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.brand p{color:var(--mut);font-size:12.5px;letter-spacing:.08em;margin-top:2px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.chip{
+  display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;
+  background:var(--card);border:1px solid var(--line);font-size:12px;color:var(--mut);
+  white-space:nowrap;
+}
+.chip b{color:var(--txt);font-weight:600}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--dim);flex:none}
+.dot.ok{background:var(--ok);box-shadow:0 0 8px rgba(125,220,154,.6)}
+.dot.err{background:var(--err)}
+.dot.warn{background:var(--warn)}
+
+/* ---------- layout ---------- */
+.grid{display:grid;grid-template-columns:minmax(340px,5fr) minmax(400px,7fr);gap:18px;align-items:start}
+@media(max-width:960px){.grid{grid-template-columns:1fr}}
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,.015),transparent 30%),var(--card);
+  border:1px solid var(--line);border-radius:var(--r);padding:20px;
+  box-shadow:0 12px 40px rgba(0,0,0,.35);
+}
+.card h2{font-size:12px;letter-spacing:.18em;color:var(--gold);font-weight:700;
+  text-transform:uppercase;display:flex;align-items:center;gap:9px;margin-bottom:16px}
+.card h2 .n{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;
+  border-radius:7px;background:rgba(240,199,106,.12);color:var(--gold);font-size:11.5px}
+.hint{color:var(--dim);font-size:12px;margin-top:6px}
+
+/* ---------- tabs ---------- */
+.tabs{display:flex;gap:6px;background:var(--bg2);padding:5px;border-radius:12px;border:1px solid var(--line);margin-bottom:16px}
+.tab{flex:1;padding:9px 6px;border:none;border-radius:9px;background:transparent;color:var(--mut);
+  font-size:13px;font-weight:600;cursor:pointer;transition:.18s;font-family:inherit}
+.tab:hover{color:var(--txt)}
+.tab.on{background:var(--card2);color:var(--gold);box-shadow:inset 0 0 0 1px var(--line2)}
+.tabpane{display:none}.tabpane.on{display:block}
+
+/* ---------- inputs ---------- */
+input[type=text],input[type=url],select,textarea{
+  width:100%;padding:11px 13px;border-radius:var(--rs);border:1px solid var(--line2);
+  background:var(--bg2);color:var(--txt);font-size:14px;font-family:inherit;outline:none;transition:.15s;
+}
+input:focus,select:focus{border-color:var(--gold2);box-shadow:0 0 0 3px rgba(212,165,63,.13)}
+input::placeholder{color:var(--dim)}
+label.f{display:block;margin:13px 0 6px;font-size:12px;color:var(--mut);font-weight:600;letter-spacing:.04em}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:520px){.row3{grid-template-columns:1fr 1fr}}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;
+  border-radius:var(--rs);border:1px solid var(--line2);background:var(--card2);color:var(--txt);
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit;
+}
+.btn:hover{border-color:var(--gold2);color:var(--gold)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{
+  background:var(--grad);border:none;color:#1a1206;font-weight:800;letter-spacing:.02em;
+  box-shadow:0 6px 22px rgba(212,165,63,.3);padding:14px 22px;font-size:15px;width:100%;
+}
+.btn.primary:hover{filter:brightness(1.07);color:#1a1206}
+.btn.ghost{background:transparent}
+.btn.sm{padding:7px 12px;font-size:12px;border-radius:8px}
+.btn.danger:hover{border-color:var(--err);color:var(--err)}
+
+/* ---------- preset picker ---------- */
+.presets{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow:auto;padding-right:4px}
+.preset{
+  display:block;padding:12px 14px;border-radius:var(--rs);border:1px solid var(--line);
+  background:var(--bg2);cursor:pointer;transition:.15s;
+}
+.preset:hover{border-color:var(--line2)}
+.preset.on{border-color:var(--gold2);background:linear-gradient(180deg,rgba(240,199,106,.09),rgba(240,199,106,.03))}
+.preset .top{display:flex;align-items:center;gap:8px}
+.preset .nm{font-weight:700;font-size:13.5px}
+.preset .desc{color:var(--mut);font-size:12px;margin-top:4px}
+.preset .sz{color:var(--dim);font-size:11px;margin-top:5px}
+.badge{font-size:9.5px;font-weight:800;letter-spacing:.1em;padding:3px 7px;border-radius:6px;margin-left:auto;flex:none}
+.badge.RAW{background:rgba(242,140,140,.14);color:#f2a1a1}
+.badge.LOSSLESS{background:rgba(240,199,106,.15);color:var(--gold)}
+.badge.HDR{background:rgba(126,200,255,.14);color:#8ecbff}
+.badge.HQ{background:rgba(201,160,255,.14);color:#c9a0ff}
+.badge.COMPAT{background:rgba(125,220,154,.13);color:var(--ok)}
+.compat{color:var(--gold2);letter-spacing:1px;font-size:10px}
+
+/* ---------- segmented ---------- */
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{
+  padding:8px 13px;border-radius:9px;border:1px solid var(--line);background:var(--bg2);
+  color:var(--mut);font-size:12.5px;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit;
+}
+.seg button:hover{color:var(--txt);border-color:var(--line2)}
+.seg button.on{background:rgba(240,199,106,.13);border-color:var(--gold2);color:var(--gold)}
+
+/* ---------- effects ---------- */
+.fx{border:1px solid var(--line);border-radius:var(--rs);background:var(--bg2);padding:12px 14px;margin-bottom:10px}
+.fx .head{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.fx .head .t{font-weight:700;font-size:13px}
+.fx .head .d{color:var(--dim);font-size:11.5px;margin-top:2px}
+.fx .body{margin-top:11px;padding-top:11px;border-top:1px dashed var(--line)}
+.switch{position:relative;width:40px;height:22px;flex:none;margin-left:auto}
+.switch input{opacity:0;width:0;height:0}
+.slider-txt{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);margin:8px 0 4px}
+.slider-txt b{color:var(--gold);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--gold2);height:22px;cursor:pointer}
+.toggle{display:flex;align-items:flex-start;gap:9px;padding:7px 0;cursor:pointer;user-select:none}
+.toggle input{display:none}
+.toggle .tk{
+  width:18px;height:18px;border-radius:5px;border:1.5px solid var(--line2);flex:none;margin-top:1px;
+  display:inline-flex;align-items:center;justify-content:center;transition:.15s;background:var(--bg2)
+}
+.toggle input:checked + .tk{background:var(--gold);border-color:var(--gold)}
+.toggle input:checked + .tk:after{content:"✓";color:#1a1206;font-size:12px;font-weight:900}
+.toggle .tt{font-size:12.5px;font-weight:600}
+.toggle .td{font-size:11px;color:var(--dim)}
+details.adv{margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+details.adv summary{color:var(--mut);font-size:12.5px;cursor:pointer;font-weight:600;user-select:none}
+details.adv summary:hover{color:var(--gold)}
+
+/* ---------- url info / upload ---------- */
+.info{
+  margin-top:12px;padding:13px;border-radius:var(--rs);border:1px solid var(--line2);
+  background:var(--bg2);display:none;gap:14px;
+}
+.info.on{display:flex}
+.info img{width:132px;border-radius:8px;object-fit:cover;background:#000;flex:none}
+.info .m{min-width:0}
+.info .m .t{font-weight:700;font-size:14px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.info .m .s{color:var(--mut);font-size:12px;margin-top:5px}
+.drop{
+  border:2px dashed var(--line2);border-radius:var(--r);padding:34px 18px;text-align:center;
+  color:var(--mut);cursor:pointer;transition:.2s;font-size:13.5px;
+}
+.drop:hover,.drop.over{border-color:var(--gold2);color:var(--gold);background:rgba(240,199,106,.04)}
+.drop b{color:var(--txt)}
+.upbar{margin-top:12px;display:none}
+.upbar.on{display:block}
+.brow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);margin-top:8px;font-size:13px;cursor:pointer;transition:.14s}
+.brow:hover{border-color:var(--gold2)}
+.brow .ic{width:20px;text-align:center;flex:none}
+.brow .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brow .sz{margin-left:auto;color:var(--dim);font-size:11.5px;flex:none}
+.crumb{display:flex;gap:5px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-bottom:10px;word-break:break-all}
+.crumb span{cursor:pointer}.crumb span:hover{color:var(--gold)}
+.crumb .cur{color:var(--gold);font-weight:600}
+
+/* ---------- summary & start ---------- */
+.summary{
+  margin-top:14px;padding:12px 14px;border-radius:var(--rs);background:rgba(240,199,106,.06);
+  border:1px solid rgba(212,165,63,.25);font-size:12.5px;color:var(--mut);
+}
+.summary b{color:var(--gold)}
+.warnbox{display:none;margin-top:12px;padding:12px 14px;border-radius:var(--rs);
+  background:rgba(242,193,78,.07);border:1px solid rgba(242,193,78,.3);font-size:12.5px;color:#e8d9b0}
+.warnbox.on{display:block}
+
+/* ---------- jobs ---------- */
+.jobs-sec{margin-top:22px}
+.jobs-head{display:flex;align-items:center;gap:12px;margin-bottom:13px}
+.jobs-head h2{font-size:12px;letter-spacing:.18em;color:var(--gold);font-weight:700;text-transform:uppercase}
+.jobs-head .cnt{color:var(--dim);font-size:12px}
+.job{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:16px 18px;margin-bottom:12px;transition:.2s;
+}
+.job.running{border-color:rgba(212,165,63,.4)}
+.job.done{border-color:rgba(125,220,154,.25)}
+.job.error{border-color:rgba(242,140,140,.35)}
+.job .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.job .nm{font-weight:700;font-size:14px;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.status{
+  margin-left:auto;font-size:10.5px;font-weight:800;letter-spacing:.09em;padding:4px 10px;
+  border-radius:999px;text-transform:uppercase;flex:none;
+}
+.status.queued{background:rgba(154,163,184,.15);color:var(--mut)}
+.status.running{background:rgba(240,199,106,.15);color:var(--gold)}
+.status.done{background:rgba(125,220,154,.14);color:var(--ok)}
+.status.error{background:rgba(242,140,140,.15);color:var(--err)}
+.status.canceled{background:rgba(154,163,184,.15);color:var(--mut)}
+.job .meta{color:var(--dim);font-size:12px;margin-top:5px;display:flex;gap:10px;flex-wrap:wrap}
+.pbar{height:8px;border-radius:99px;background:var(--bg2);border:1px solid var(--line);margin-top:12px;overflow:hidden}
+.pbar i{display:block;height:100%;width:0%;background:var(--grad);border-radius:99px;transition:width .5s ease}
+.job.done .pbar i{background:linear-gradient(90deg,#69c98a,#3fa06b)}
+.job .pline{display:flex;justify-content:space-between;font-size:11.5px;color:var(--mut);margin-top:6px;font-variant-numeric:tabular-nums}
+.job .acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.job .err{margin-top:10px;padding:10px 12px;border-radius:9px;background:rgba(242,140,140,.08);
+  border:1px solid rgba(242,140,140,.22);color:#f0b9b9;font-size:12px;white-space:pre-wrap;max-height:130px;overflow:auto}
+.job video{width:100%;margin-top:12px;border-radius:10px;background:#000;max-height:420px}
+.empty{padding:40px;text-align:center;color:var(--dim);font-size:13px;border:1px dashed var(--line);border-radius:var(--r)}
+
+/* ---------- modal & toast ---------- */
+.modal{position:fixed;inset:0;background:rgba(3,5,9,.78);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal.on{display:flex}
+.modal .box{background:var(--card);border:1px solid var(--line2);border-radius:var(--r);
+  width:min(680px,100%);max-height:82vh;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.modal .box .hd{display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line);font-weight:700}
+.modal .box .hd .x{margin-left:auto;cursor:pointer;color:var(--mut);font-size:20px;padding:0 6px}
+.modal .box .hd .x:hover{color:var(--err)}
+.modal .list{overflow:auto;padding:12px 14px}
+.toasts{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:9px;z-index:99}
+.toast{padding:11px 16px;border-radius:11px;background:var(--card2);border:1px solid var(--line2);
+  font-size:13px;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:tin .25s ease;max-width:360px}
+.toast.ok{border-color:rgba(125,220,154,.4)}
+.toast.err{border-color:rgba(242,140,140,.45)}
+@keyframes tin{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+footer{margin-top:34px;text-align:center;color:var(--dim);font-size:11.5px;line-height:1.8}
+.spin{display:inline-block;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#f7dc9a"/><stop offset="1" stop-color="#c9932f"/>
+        </linearGradient></defs>
+        <rect width="64" height="64" rx="15" fill="#0d111c" stroke="rgba(240,199,106,.35)"/>
+        <path d="M32 9 L53 55 H43 L32 29 L21 55 H11 Z" fill="url(#lg)"/>
+        <rect x="27" y="38" width="10" height="3.4" rx="1.7" fill="url(#lg)"/>
+      </svg>
+      <div class="brand">
+        <h1>AUREUS</h1>
+        <p>Video Enhancer · Upscaler · RAW Lossless Output</p>
+      </div>
+    </div>
+    <div class="chips" id="chips">
+      <span class="chip"><span class="dot" id="d-sys"></span><span id="c-sys">…</span></span>
+      <span class="chip"><span class="dot" id="d-ram"></span>RAM <b id="c-ram">…</b></span>
+      <span class="chip"><span class="dot" id="d-ff"></span>ffmpeg <b id="c-ff">…</b></span>
+      <span class="chip"><span class="dot" id="d-yt"></span>yt-dlp <b id="c-yt">…</b></span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- ======================= SOURCE ======================= -->
+    <section class="card">
+      <h2><span class="n">1</span> Source Video</h2>
+      <div class="tabs">
+        <button class="tab on" data-tab="url">🔗 Link / Embed</button>
+        <button class="tab" data-tab="upload">⬆ Upload</button>
+        <button class="tab" data-tab="server">📁 Server Files</button>
+      </div>
+
+      <div class="tabpane on" id="pane-url">
+        <label class="f">VIDEO URL — YOUTUBE, EMBED, 1000+ SITES</label>
+        <input type="url" id="url-input" placeholder="https://www.youtube.com/watch?v=… atau /embed/…">
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn" id="btn-probe" style="flex:1">🔎 Check Info</button>
+          <select id="url-quality" style="width:130px">
+            <option value="best">Best</option><option value="2160">≤ 4K</option>
+            <option value="1440">≤ 1440p</option><option value="1080" selected>≤ 1080p</option>
+            <option value="720">≤ 720p</option><option value="480">≤ 480p</option>
+          </select>
+        </div>
+        <div class="info" id="url-info">
+          <img id="u-thumb" alt="" onerror="this.style.display='none'">
+          <div class="m">
+            <div class="t" id="u-title"></div>
+            <div class="s" id="u-meta"></div>
+          </div>
+        </div>
+        <p class="hint">Link embed YouTube (…/embed/ID), Shorts, youtu.be, dan situs lain didukung lewat yt-dlp.</p>
+      </div>
+
+      <div class="tabpane" id="pane-upload">
+        <label class="f">UPLOAD FILE VIDEO DARI PERANGKAT INI</label>
+        <div class="drop" id="drop">
+          <b> klik / drop file video di sini</b><br>
+          <span style="font-size:12px">mp4 · mkv · mov · avi · webm · ts · dll</span>
+          <input type="file" id="file-input" accept="video/*,.mkv,.ts,.y4m" style="display:none">
+        </div>
+        <div class="upbar" id="upbar-w">
+          <div class="slider-txt"><span id="up-name">…</span><b id="up-pct">0%</b></div>
+          <div class="pbar"><i id="up-bar"></i></div>
+        </div>
+        <div class="info" id="up-info" style="margin-top:12px">
+          <div class="m" style="flex:1"><div class="t" id="up-title"></div><div class="s" id="up-meta"></div></div>
+        </div>
+        <p class="hint">Untuk file yang sangat besar, gunakan tab <b>Server Files</b> (tanpa upload).</p>
+      </div>
+
+      <div class="tabpane" id="pane-server">
+        <label class="f">PILIH FILE DI SERVER / PERANGKAT INI</label>
+        <button class="btn" id="btn-browse" style="width:100%">📁 Buka File Manager…</button>
+        <div class="info" id="srv-info">
+          <div class="m" style="flex:1"><div class="t" id="srv-title"></div><div class="s" id="srv-meta"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= SETTINGS ======================= -->
+    <section class="card">
+      <h2><span class="n">2</span> Output &amp; Enhancement</h2>
+
+      <label class="f">OUTPUT PRESET</label>
+      <div class="presets" id="presets"></div>
+
+      <label class="f">TARGET RESOLUTION</label>
+      <div class="seg" id="scale-seg">
+        <button data-v="source" class="on">Source</button>
+        <button data-v="720p">720p</button>
+        <button data-v="1080p">1080p</button>
+        <button data-v="1440p">1440p</button>
+        <button data-v="2160p">4K</button>
+        <button data-v="2x">2×</button>
+        <button data-v="4x">4×</button>
+      </div>
+
+      <label class="f">EFFECTS &amp; SHADERS (OPSIONAL)</label>
+      <div class="fx">
+        <div class="head" data-toggle="fx-denoise">
+          <div><div class="t">✨ Denoise — menjernihkan</div><div class="d">hapus noise/grain kompresi</div></div>
+          <span class="switch"><input type="checkbox" id="fx-denoise"><i></i></span>
+        </div>
+        <div class="body" id="body-denoise" style="display:none">
+          <div class="slider-txt"><span>Strength</span><b id="v-denoise">Medium</b></div>
+          <input type="range" id="s-denoise" min="1" max="3" value="2">
+          <label class="f" style="margin-top:10px">METHOD</label>
+          <select id="sel-denoiser"><option value="hqdn3d">hqdn3d (cepat)</option><option value="nlmeans">NLMeans (paling halus, lambat)</option></select>
+        </div>
+      </div>
+      <div class="fx">
+        <div class="head" data-toggle="fx-sharpen">
+          <div><div class="t">🜲 Sharpen Shader — CAS</div><div class="d">Contrast Adaptive Sharpening ala shader</div></div>
+          <span class="switch"><input type="checkbox" id="fx-sharpen" checked><i></i></span>
+        </div>
+        <div class="body" id="body-sharpen" style="display:none">
+          <div class="slider-txt"><span>Strength</span><b id="v-sharpen">0.35</b></div>
+          <input type="range" id="s-sharpen" min="0" max="100" value="35">
+          <label class="f" style="margin-top:10px">SHADER</label>
+          <select id="sel-shader"><option value="cas">CAS (FidelityFX-style)</option><option value="unsharp">Unsharp Mask</option><option value="none">Off</option></select>
+        </div>
+      </div>
+      <div class="fx">
+        <div class="head" data-toggle="fx-deband">
+          <div><div class="t">🌈 Deband + Deblock</div><div class="d">hapus banding gradasi &amp; artefak blok</div></div>
+          <span class="switch"><input type="checkbox" id="fx-deband"><i></i></span>
+        </div>
+        <div class="body" id="body-deband" style="display:none">
+          <label class="toggle"><input type="checkbox" id="t-deband" checked><span class="tk"></span><span><span class="tt">Deband</span><div class="td">haluskan gradasi warna (langit, kegelapan)</div></span></label>
+          <label class="toggle"><input type="checkbox" id="t-deblock"><span class="tk"></span><span><span class="tt">Deblock</span><div class="td">hapus artefak blocking dari video terkompresi</div></span></label>
+        </div>
+      </div>
+      <div class="fx">
+        <div class="head" data-toggle="fx-color">
+          <div><div class="t">🎨 Color Boost</div><div class="d">saturasi · kontras · gamma</div></div>
+          <span class="switch"><input type="checkbox" id="fx-color"><i></i></span>
+        </div>
+        <div class="body" id="body-color" style="display:none">
+          <div class="slider-txt"><span>Saturation</span><b id="v-sat">1.00</b></div>
+          <input type="range" id="s-sat" min="50" max="180" value="100">
+          <div class="slider-txt"><span>Contrast</span><b id="v-con">1.00</b></div>
+          <input type="range" id="s-con" min="50" max="160" value="100">
+          <div class="slider-txt"><span>Gamma</span><b id="v-gam">1.00</b></div>
+          <input type="range" id="s-gam" min="70" max="150" value="100">
+          <button class="btn sm ghost" id="btn-color-reset" style="margin-top:8px">↺ Reset</button>
+        </div>
+      </div>
+      <div class="fx">
+        <div class="head" data-toggle="fx-hdr">
+          <div><div class="t">🔆 SDR → HDR Expansion</div><div class="d">10-bit BT.2020 PQ + signaling HDR10</div></div>
+          <span class="switch"><input type="checkbox" id="fx-hdr"><i></i></span>
+        </div>
+        <div class="body" id="body-hdr" style="display:none">
+          <p class="hint" style="margin:0 0 8px">Ekspansi rentang dinamis SDR → container HDR (butuh display HDR untuk melihat hasilnya; otomatis pakai preset <b>hdr10</b> saat aktif).</p>
+          <label class="toggle"><input type="checkbox" id="t-tonemap"><span class="tk"></span><span><span class="tt">HDR → SDR Tone Map</span><div class="td">untuk sumber HDR yang ingin diubah ke SDR</div></span></label>
+        </div>
+      </div>
+      <div class="fx">
+        <div class="head" data-toggle="fx-motion">
+          <div><div class="t">⧗ Frame Rate &amp; Motion</div><div class="d">fps target + interpolasi gerak</div></div>
+          <span class="switch"><input type="checkbox" id="fx-motion"><i></i></span>
+        </div>
+        <div class="body" id="body-motion" style="display:none">
+          <div class="row2">
+            <div><label class="f">FPS</label>
+              <select id="sel-fps"><option value="source">Source</option><option>24</option><option>30</option><option>48</option><option>60</option></select>
+            </div>
+            <div style="display:flex;align-items:end"><label class="toggle" style="padding-bottom:12px"><input type="checkbox" id="t-minterpolate"><span class="tk"></span><span><span class="tt">Motion interp. (SLOW)</span></span></label></div>
+          </div>
+        </div>
+      </div>
+
+      <details class="adv">
+        <summary>⚙ Advanced — scaler, audio, chroma, depth</summary>
+        <div class="row2" style="margin-top:12px">
+          <div><label class="f">SCALER</label>
+            <select id="sel-scaler">
+              <option value="lanczos">Lanczos (sharpest)</option>
+              <option value="spline">Spline</option>
+              <option value="bicubic">Bicubic</option>
+              <option value="gauss">Gaussian (soft)</option>
+              <option value="neighbor">Neighbor (pixel-art)</option>
+              <option value="xbr2">XBR 2× (pixel-art)</option>
+              <option value="xbr4">XBR 4× (pixel-art)</option>
+            </select>
+          </div>
+          <div><label class="f">AUDIO</label>
+            <select id="sel-audio"><option value="auto">Auto</option><option value="copy">Copy (tanpa re-encode)</option><option value="flac">FLAC lossless</option><option value="pcm">PCM</option><option value="aac">AAC 320k</option></select>
+          </div>
+        </div>
+        <div class="row2">
+          <div><label class="f">CHROMA</label>
+            <select id="sel-chroma"><option value="auto">Auto (per preset)</option><option value="420">4:2:0 (kompatibel)</option><option value="422">4:2:2</option><option value="444">4:4:4 (penuh)</option><option value="rgb">RGB (raw FFV1 saja)</option></select>
+          </div>
+          <div><label class="f">BIT DEPTH</label>
+            <select id="sel-depth"><option value="auto">Auto</option><option value="8">8-bit</option><option value="10">10-bit</option><option value="12">12-bit</option></select>
+          </div>
+        </div>
+        <label class="toggle" style="margin-top:6px"><input type="checkbox" id="t-keepsrc" checked><span class="tk"></span><span><span class="tt">Simpan file sumber hasil download</span></span></label>
+        <div id="force-wrap"></div>
+      </details>
+
+      <div class="warnbox" id="ram-warn">
+        ⚠ Perangkat ini memiliki RAM di bawah spesifikasi minimum AUREUS (8 GB).
+        <label class="toggle" style="margin-top:6px"><input type="checkbox" id="t-force"><span class="tk"></span><span><span class="tt">Lanjutkan saja (Proceed anyway)</span></span></label>
+      </div>
+
+      <div class="summary" id="summary">…</div>
+      <div style="margin-top:14px">
+        <button class="btn primary" id="btn-start" disabled>✨ START ENHANCE</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ======================= JOBS ======================= -->
+  <section class="jobs-sec">
+    <div class="jobs-head">
+      <h2>⧗ Jobs</h2><span class="cnt" id="jobs-cnt"></span>
+      <button class="btn sm ghost" id="btn-refresh" style="margin-left:auto">↻ Refresh</button>
+    </div>
+    <div id="jobs"><div class="empty">Belum ada job. Pilih source lalu tekan <b>START ENHANCE</b>.</div></div>
+  </section>
+
+  <footer>
+    AUREUS v<span id="ver"></span> — konversi diproses lokal oleh ffmpeg · RAW/lossless menjaga setiap piksel hasil proses<br>
+    Upscale tidak bisa mengembalikan detail yang tidak ada di sumber — tapi AUREUS menjaga detail yang ada sebis mungkin tanpa kompresi ulang.
+  </footer>
+</div>
+
+<!-- file browser modal -->
+<div class="modal" id="modal">
+  <div class="box">
+    <div class="hd">📁 File Manager <span class="x" id="modal-x">×</span></div>
+    <div style="padding:12px 16px 0"><input type="text" id="b-path" placeholder="/path…"><button class="btn sm" id="b-go" style="margin-top:8px">Go</button></div>
+    <div class="list" id="b-list" style="margin-top:10px"></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+"use strict";
+/* ============================== helpers ============================== */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmtSize = n => { n=+n||0; const u=["B","KB","MB","GB","TB"]; let i=0; while(n>=1024&&i<4){n/=1024;i++;} return n.toFixed(n>=100||i===0?0:1)+" "+u[i]; };
+const fmtDur = s => { s=+s||0; const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=Math.floor(s%60); return h?`${h}:${String(m).padStart(2,"0")}:${String(x).padStart(2,"0")}`:`${m}:${String(x).padStart(2,"0")}`; };
+
+async function api(path, opts){
+  const r = await fetch(path, opts);
+  let d = null;
+  try { d = await r.json(); } catch(e){}
+  if(!r.ok) throw new Error((d && d.error) || ("HTTP "+r.status));
+  return d;
+}
+function toast(msg, cls){
+  const el = document.createElement("div");
+  el.className = "toast " + (cls||"");
+  el.textContent = msg;
+  $("toasts").appendChild(el);
+  setTimeout(()=>{ el.style.opacity="0"; el.style.transition=".4s"; setTimeout(()=>el.remove(),450); }, 3400);
+}
+
+/* ============================== state ============================== */
+const state = {
+  source: null,            // {kind:'url'|'file', path, label}
+  preset: "superhd",
+  presets: [],
+  settings: {
+    preset:"superhd", scale:"source", scaler:"lanczos",
+    denoise:0, denoiser:"hqdn3d", sharpen:0.35, shader:"cas",
+    deband:false, deblock:false, deinterlace:false, grain:0,
+    saturation:1.0, contrast:1.0, gamma:1.0, brightness:0.0,
+    hdr:false, tone_map:"auto", fps:"source", motion_interp:false,
+    audio:"auto", chroma:"auto", depth:"auto",
+    quality:"1080", crf:0, threads:0, keep_source:true, force:false
+  },
+  system: null,
+  timer: null
+};
+
+/* ============================== system ============================== */
+async function loadSystem(){
+  try{
+    const s = await api("/api/system");
+    state.system = s;
+    $("ver").textContent = s.version;
+    $("c-sys").textContent = s.platform === "termux" ? "Termux" : (s.platform[0].toUpperCase()+s.platform.slice(1));
+    $("d-sys").className = "dot ok";
+    $("c-ram").textContent = s.ram_gb.toFixed(1)+" GB";
+    $("d-ram").className = "dot " + (s.ram_ok ? "ok" : "warn");
+    $("c-ff").textContent = s.ffmpeg.found ? "OK" : "missing";
+    $("d-ff").className = "dot " + (s.ffmpeg.found ? "ok" : "err");
+    $("c-yt").textContent = s.ytdlp.found ? "OK" : "missing";
+    $("d-yt").className = "dot " + (s.ytdlp.found ? "ok" : "err");
+    if(!s.ram_ok){
+      $("ram-warn").classList.add("on");
+      $("force-wrap").innerHTML = '<label class="toggle"><input type="checkbox" id="t-force2"><span class="tk"></span><span><span class="tt">Proceed anyway (RAM < 8 GB)</span></span></label>';
+      $("t-force2").addEventListener("change", e => { $("t-force").checked = e.target.checked; syncForce(); });
+    }
+    if(!s.ytdlp.found) toast("yt-dlp tidak ditemukan — fitur download URL nonaktif (pip install yt-dlp)", "err");
+    if(!s.ffmpeg.found) toast("ffmpeg tidak ditemukan — konversi tidak akan berjalan!", "err");
+  }catch(e){ toast("Gagal memuat info sistem: "+e.message, "err"); }
+}
+
+/* ============================== presets ============================== */
+async function loadPresets(){
+  const d = await api("/api/presets");
+  state.presets = d.presets;
+  const box = $("presets"); box.innerHTML = "";
+  d.presets.forEach(p=>{
+    const el = document.createElement("label");
+    el.className = "preset" + (p.key===state.preset ? " on":"");
+    el.innerHTML = `
+      <div class="top">
+        <span class="nm">${esc(p.label)}</span>
+        <span class="badge ${p.badge}">${p.badge}</span>
+      </div>
+      <div class="desc">${esc(p.desc)}</div>
+      <div class="sz">${"★".repeat(p.compat)}${"☆".repeat(5-p.compat)} kompatibilitas · ${esc(p.size_note)}</div>
+      <input type="radio" name="preset" value="${p.key}" style="display:none" ${p.key===state.preset?"checked":""}>`;
+    el.addEventListener("click", ()=> selectPreset(p.key));
+    box.appendChild(el);
+  });
+}
+function selectPreset(key){
+  state.preset = key;
+  document.querySelectorAll(".preset").forEach(el=>{
+    el.classList.toggle("on", el.querySelector("input").value===key);
+  });
+  state.settings.preset = key;
+  updateSummary();
+}
+
+/* ============================== tabs & source ============================== */
+document.querySelectorAll(".tab").forEach(t=>{
+  t.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+    document.querySelectorAll(".tabpane").forEach(x=>x.classList.remove("on"));
+    t.classList.add("on");
+    $("pane-"+t.dataset.tab).classList.add("on");
+  });
+});
+
+function setSource(src){ state.source = src; updateStart(); updateSummary(); }
+
+/* --- URL tab --- */
+$("btn-probe").addEventListener("click", async ()=>{
+  const url = $("url-input").value.trim();
+  if(!url) return toast("Masukkan URL video dulu", "err");
+  $("btn-probe").disabled = true; $("btn-probe").innerHTML = '<span class="spin">◐</span> Checking…';
+  try{
+    const info = await api("/api/probe", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({source:url})});
+    $("url-info").classList.add("on");
+    $("u-title").textContent = info.title || url;
+    $("u-meta").textContent = `${info.uploader ? info.uploader+" · " : ""}${info.duration_h||"?"} · best ${info.best_height||"?"}p · ≈${info.size_h||"?"}`;
+    const img = $("u-thumb"); img.style.display=""; img.src = info.thumbnail || "";
+    setSource({kind:"url", path:url, label:info.title||url});
+    toast("Video ditemukan: "+(info.title||url).slice(0,60), "ok");
+  }catch(e){ toast("URL error: "+e.message, "err"); $("url-info").classList.remove("on"); }
+  finally{ $("btn-probe").disabled=false; $("btn-probe").textContent="🔎 Check Info"; }
+});
+$("url-input").addEventListener("keydown", e=>{ if(e.key==="Enter") $("btn-probe").click(); });
+
+/* --- Upload tab --- */
+const drop = $("drop");
+drop.addEventListener("click", ()=> $("file-input").click());
+["dragover","dragenter"].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.add("over"); }));
+["dragleave","drop"].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e=>{ const f = e.dataTransfer.files[0]; if(f) uploadFile(f); });
+$("file-input").addEventListener("change", e=>{ const f = e.target.files[0]; if(f) uploadFile(f); });
+
+function uploadFile(file){
+  if(file.size > 8*1024**3) return toast("File > 8 GB — gunakan tab Server Files", "err");
+  $("upbar-w").classList.add("on");
+  $("up-name").textContent = file.name;
+  const xhr = new XMLHttpRequest();
+  xhr.open("POST", "/api/upload?name="+encodeURIComponent(file.name));
+  xhr.upload.onprogress = e=>{
+    const pct = e.lengthComputable ? Math.round(e.loaded/e.total*100) : 0;
+    $("up-pct").textContent = pct+"%"; $("up-bar").style.width = pct+"%";
+  };
+  xhr.onload = async ()=>{
+    if(xhr.status !== 200){ toast("Upload gagal", "err"); return; }
+    $("up-pct").textContent = "100%"; $("up-bar").style.width = "100%";
+    const d = JSON.parse(xhr.responseText);
+    try{
+      const info = await api("/api/probe", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({source:d.path})});
+      $("up-info").classList.add("on");
+      $("up-title").textContent = d.name;
+      $("up-meta").textContent = `${info.res} · ${info.fps||"?"} fps · ${info.vcodec||"?"}${info.hdr?" · HDR":""} · ${fmtSize(d.size)}`;
+    }catch(e){
+      $("up-info").classList.add("on"); $("up-title").textContent = d.name;
+      $("up-meta").textContent = fmtSize(d.size) + " (tidak bisa dianalisa)";
+    }
+    setSource({kind:"file", path:d.path, label:d.name});
+    toast("Upload selesai", "ok");
+  };
+  xhr.onerror = ()=> toast("Upload gagal — cek koneksi", "err");
+  xhr.send(file);
+}
+
+/* --- Server files tab --- */
+$("btn-browse").addEventListener("click", ()=> openBrowser(state.system ? state.system.output_dir : "."));
+async function openBrowser(path){
+  $("modal").classList.add("on");
+  try{
+    const d = await api("/api/browse", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({path})});
+    renderBrowse(d);
+  }catch(e){ toast("Browse error: "+e.message, "err"); }
+}
+function renderBrowse(d){
+  $("b-path").value = d.path;
+  const home = d.path.split("/").filter(Boolean);
+  let crumb = '<span data-p="/">/</span> ';
+  let acc = "";
+  home.forEach(seg=>{ acc += "/"+seg; crumb += `<span data-p="${esc(acc)}">${esc(seg)}</span> / `; });
+  $("b-list").innerHTML = '<div class="crumb">'+crumb.replace(/\/ $/,"")+'</div>' +
+    (d.parent ? `<div class="brow" data-d="${esc(d.parent)}"><span class="ic">📁</span><span class="nm">.. (parent)</span></div>` : "") +
+    d.entries.map(e=> e.is_dir
+      ? `<div class="brow" data-d="${esc(e.path)}"><span class="ic">📁</span><span class="nm">${esc(e.name)}</span></div>`
+      : `<div class="brow ${e.media?"":"op"}" data-f="${esc(e.path)}" data-n="${esc(e.name)}" style="${e.media?"":"opacity:.45"}"><span class="ic">${e.media?"🎞":"📄"}</span><span class="nm">${esc(e.name)}</span><span class="sz">${esc(e.size_h||"")}</span></div>`
+    ).join("");
+  $("b-list").querySelectorAll(".crumb span[data-p]").forEach(s=> s.addEventListener("click", ()=> openBrowser(s.dataset.p)));
+  $("b-list").querySelectorAll(".brow[data-d]").forEach(r=> r.addEventListener("click", ()=> openBrowser(r.dataset.d)));
+  $("b-list").querySelectorAll(".brow[data-f]").forEach(r=> r.addEventListener("click", async ()=>{
+    const p = r.dataset.f, n = r.dataset.n;
+    if(!/\.(mp4|mkv|mov|avi|webm|flv|ts|m4v|mpg|mpeg|wmv|3gp|vob|ogv|mts|m2ts|mxf|y4m)$/i.test(n)) return;
+    $("modal").classList.remove("on");
+    try{
+      const info = await api("/api/probe", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({source:p})});
+      $("srv-info").classList.add("on");
+      $("srv-title").textContent = n;
+      $("srv-meta").textContent = `${info.res} · ${info.fps||"?"} fps · ${info.vcodec||"?"}${info.hdr?" · HDR":""} · ${fmtSize(info.size)}`;
+    }catch(e){
+      $("srv-info").classList.add("on"); $("srv-title").textContent = n; $("srv-meta").textContent = "";
+    }
+    setSource({kind:"file", path:p, label:n});
+  }));
+}
+$("modal-x").addEventListener("click", ()=> $("modal").classList.remove("on"));
+$("modal").addEventListener("click", e=>{ if(e.target.id==="modal") $("modal").classList.remove("on"); });
+$("b-go").addEventListener("click", ()=> openBrowser($("b-path").value.trim()));
+
+/* ============================== effects wiring ============================== */
+document.querySelectorAll(".fx .head[data-toggle]").forEach(h=>{
+  h.addEventListener("click", e=>{
+    if(e.target.closest(".switch")) return;
+    const cb = $(h.dataset.toggle);
+    cb.checked = !cb.checked; cb.dispatchEvent(new Event("change"));
+  });
+});
+function bindFx(chk, bodyId){
+  $(chk).addEventListener("change", e=>{ $(bodyId).style.display = e.target.checked ? "block" : "none"; syncSettings(); });
+}
+bindFx("fx-denoise","body-denoise"); bindFx("fx-sharpen","body-sharpen"); bindFx("fx-deband","body-deband");
+bindFx("fx-color","body-color"); bindFx("fx-hdr","body-hdr"); bindFx("fx-motion","body-motion");
+
+const dnLvl = ["","Light","Medium","Strong"];
+$("s-denoise").addEventListener("input", e=>{ $("v-denoise").textContent = dnLvl[e.target.value]; syncSettings(); });
+$("s-sharpen").addEventListener("input", e=>{ $("v-sharpen").textContent = (e.target.value/100).toFixed(2); syncSettings(); });
+$("sel-denoiser").addEventListener("change", syncSettings);
+$("sel-shader").addEventListener("change", syncSettings);
+$("s-sat").addEventListener("input", e=>{ $("v-sat").textContent = (e.target.value/100).toFixed(2); syncSettings(); });
+$("s-con").addEventListener("input", e=>{ $("v-con").textContent = (e.target.value/100).toFixed(2); syncSettings(); });
+$("s-gam").addEventListener("input", e=>{ $("v-gam").textContent = (e.target.value/100).toFixed(2); syncSettings(); });
+$("btn-color-reset").addEventListener("click", ()=>{ ["s-sat","s-con","s-gam"].forEach(id=>$(id).value=100); $("v-sat").textContent=$("v-con").textContent=$("v-gam").textContent="1.00"; syncSettings(); });
+["t-deband","t-deblock","t-tonemap","t-minterpolate","sel-fps","sel-scaler","sel-audio","sel-chroma","sel-depth","t-keepsrc","t-force","url-quality"].forEach(id=>{
+  $(id).addEventListener("change", syncSettings);
+});
+$("scale-seg").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  $("scale-seg").querySelectorAll("button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); syncSettings();
+});
+
+function syncSettings(){
+  const s = state.settings;
+  s.preset = state.preset;
+  s.scale = ($("scale-seg").querySelector("button.on")||{}).dataset?.v || "source";
+  s.denoise = $("fx-denoise").checked ? +$("s-denoise").value : 0;
+  s.denoiser = $("sel-denoiser").value;
+  s.shader = $("fx-sharpen").checked ? $("sel-shader").value : "none";
+  s.sharpen = $("fx-sharpen").checked && s.shader !== "none" ? +$("s-sharpen").value/100 : 0;
+  s.deband = $("fx-deband").checked && $("t-deband").checked;
+  s.deblock = $("fx-deband").checked && $("t-deblock").checked;
+  s.saturation = +$("s-sat").value/100; s.contrast = +$("s-con").value/100; s.gamma = +$("s-gam").value/100;
+  s.hdr = $("fx-hdr").checked;
+  s.tone_map = ($("fx-hdr").checked && $("t-tonemap").checked) ? "hdr2sdr" : "auto";
+  s.fps = $("fx-motion").checked ? $("sel-fps").value : "source";
+  s.motion_interp = $("fx-motion").checked && $("t-minterpolate").checked;
+  s.scaler = $("sel-scaler").value; s.audio = $("sel-audio").value;
+  s.chroma = $("sel-chroma").value; s.depth = $("sel-depth").value;
+  s.keep_source = $("t-keepsrc").checked;
+  s.quality = $("url-quality").value;
+  syncForce(); updateSummary(); updateStart();
+}
+function syncForce(){ state.settings.force = $("t-force").checked; }
+
+function updateStart(){
+  const ok = !!state.source;
+  $("btn-start").disabled = !ok;
+  $("btn-start").textContent = ok ? "✨ START ENHANCE" : "✨ pilih source dulu…";
+}
+function updateSummary(){
+  const s = state.settings, p = (state.presets.find(x=>x.key===s.preset)||{});
+  const parts = [];
+  parts.push(s.scale==="source" ? "resolusi asli" : s.scale.replace("p","p").toUpperCase());
+  parts.push("<b>"+esc(p.label||s.preset)+"</b>");
+  if(s.denoise) parts.push("denoise "+dnLvl[s.denoise]);
+  if(s.shader!=="none" && s.sharpen>0) parts.push(s.shader+" "+s.sharpen.toFixed(2));
+  if(s.deband) parts.push("deband");
+  if(s.deblock) parts.push("deblock");
+  if(s.hdr) parts.push("HDR✨");
+  if(s.fps!=="source") parts.push(s.fps+"fps"+(s.motion_interp?" (interp)":""));
+  if(s.saturation!==1||s.contrast!==1) parts.push("color");
+  $("summary").innerHTML = "Output → " + esc(state.system?.output_dir || "aureus_output") + "<br>" + parts.join(" · ");
+}
+
+/* ============================== jobs ============================== */
+$("btn-start").addEventListener("click", async ()=>{
+  if(!state.source) return;
+  syncSettings();
+  const payload = {kind: state.source.kind, source: state.source.path, settings: state.settings};
+  try{
+    const d = await api("/api/jobs", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload)});
+    toast("Job dimulai ✓", "ok");
+    pollJobs(true);
+  }catch(e){ toast("Gagal memulai job: "+e.message, "err"); }
+});
+
+let pollFast = false;
+async function pollJobs(force){
+  try{
+    const d = await api("/api/jobs");
+    renderJobs(d.jobs);
+    const active = d.jobs.some(j=>j.is_active);
+    const delay = (active || pollFast) ? 1300 : 6000;
+    clearTimeout(state.timer);
+    state.timer = setTimeout(()=>pollJobs(), delay);
+    pollFast = active;
+  }catch(e){ /* server restarting? retry slower */ clearTimeout(state.timer); state.timer = setTimeout(()=>pollJobs(), 4000); }
+}
+const statusLabels = {queued:"Queued", running:"Running", done:"Done", error:"Error", canceled:"Canceled"};
+function renderJobs(jobs){
+  $("jobs-cnt").textContent = jobs.length ? `${jobs.length} job · ${jobs.filter(j=>j.is_active).length} aktif` : "";
+  if(!jobs.length){ $("jobs").innerHTML = '<div class="empty">Belum ada job. Pilih source lalu tekan <b>START ENHANCE</b>.</div>'; return; }
+  $("jobs").innerHTML = jobs.map(j=>{
+    const pct = Math.round(j.progress);
+    const badges = [
+      j.settings?.preset ? `<span>${esc(j.settings.preset)}</span>` : "",
+      j.settings?.scale && j.settings.scale!=="source" ? `<span>${esc(j.settings.scale)}</span>` : "",
+      j.out_res ? `<span>${esc(j.out_res)}</span>` : "",
+      j.out_vcodec ? `<span>${esc(j.out_vcodec)}</span>` : "",
+      j.out_size_h ? `<span>${esc(j.out_size_h)}</span>` : "",
+      j.elapsed ? `<span>${Math.round(j.elapsed)}s</span>` : ""
+    ].filter(Boolean).join("");
+    const acts = [];
+    if(j.is_active) acts.push(`<button class="btn sm danger" data-act="cancel" data-id="${j.id}">✕ Cancel</button>`);
+    if(j.status==="done" && j.output_path){
+      acts.push(`<a class="btn sm" href="/api/jobs/${j.id}/file?dl=1">⬇ Download</a>`);
+      if(/\.(mp4|webm|m4v|mov)$/i.test(j.output_path)) acts.push(`<button class="btn sm" data-act="prev" data-id="${j.id}">▶ Preview</button>`);
+    }
+    if(!j.is_active) acts.push(`<button class="btn sm ghost" data-act="del" data-id="${j.id}">🗑 Remove</button>`);
+    return `<div class="job ${j.status}" id="job-${j.id}">
+      <div class="top">
+        <span class="nm" title="${esc(j.display)}">${esc(j.display)}</span>
+        <span class="status ${j.status}">${statusLabels[j.status]||j.status}</span>
+      </div>
+      <div class="meta">${badges}${j.stage && j.is_active ? `<span>· ${esc(j.stage)}</span>`:""}</div>
+      <div class="pbar"><i style="width:${j.status==="done"?100:pct}%"></i></div>
+      <div class="pline"><span>${esc(j.detail||"")}</span><span>${pct}%</span></div>
+      ${j.error ? `<div class="err">${esc(j.error)}</div>` : ""}
+      <div class="acts">${acts.join("")}</div>
+      <div class="prevbox" id="prev-${j.id}"></div>
+    </div>`;
+  }).join("");
+  $("jobs").querySelectorAll("[data-act]").forEach(b=>{
+    b.addEventListener("click", async ()=>{
+      const id = b.dataset.id, act = b.dataset.act;
+      if(act==="cancel"){ await api(`/api/jobs/${id}/cancel`, {method:"POST"}).catch(()=>{}); pollJobs(true); }
+      if(act==="del"){ await api(`/api/jobs/${id}`, {method:"DELETE"}).catch(()=>{}); pollJobs(true); }
+      if(act==="prev"){
+        const box = $("prev-"+id);
+        if(box.innerHTML){ box.innerHTML=""; return; }
+        box.innerHTML = `<video controls preload="metadata" src="/api/jobs/${id}/file"></video>`;
+        box.querySelector("video").play().catch(()=>{});
+      }
+    });
+  });
+}
+$("btn-refresh").addEventListener("click", ()=>pollJobs(true));
+
+/* ============================== boot ============================== */
+(async function init(){
+  await loadSystem();
+  await loadPresets().catch(()=>{});
+  syncSettings();
+  pollJobs(true);
+})();
+</script>
+</body>
+</html>
