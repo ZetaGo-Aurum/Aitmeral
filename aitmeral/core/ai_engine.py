@@ -37,6 +37,29 @@ def _get_pil_image():
     return _pil_image
 
 
+def check_ai_dependencies(engine: str) -> tuple[bool, str]:
+    """
+    Check if AI engine dependencies are installed.
+    Returns (available, error_message).
+    """
+    if engine == "mmagic":
+        try:
+            import mmengine
+            import mmcv
+            import mmagic
+            return True, ""
+        except ImportError as e:
+            return False, f"MMagic dependencies missing: {e}. Install with: pip install 'aitmeral-enhancer[mmagic]'"
+    elif engine == "realesrgan":
+        try:
+            import basicsr
+            import realesrgan
+            return True, ""
+        except ImportError as e:
+            return False, f"Real-ESRGAN dependencies missing: {e}. Install with: pip install 'aitmeral-enhancer[realesrgan]'"
+    return True, ""
+
+
 @dataclass
 class AIEngineConfig:
     """Configuration for AI engine"""
@@ -176,6 +199,12 @@ class MMagicEngine(AIEngineBase):
         self._init_args = None
     
     def load_model(self) -> bool:
+        # Check dependencies first
+        available, error = check_ai_dependencies("mmagic")
+        if not available:
+            print(f"MMagic dependencies not installed: {error}")
+            return False
+        
         try:
             from mmengine.config import Config
             from mmagic.apis import init_model
@@ -271,6 +300,12 @@ class RealESRGANEngine(AIEngineBase):
         self._upsampler = None
     
     def load_model(self) -> bool:
+        # Check dependencies first
+        available, error = check_ai_dependencies("realesrgan")
+        if not available:
+            print(f"Real-ESRGAN dependencies not installed: {error}")
+            return False
+        
         try:
             from realesrgan import RealESRGANer
             from basicsr.archs.rrdbnet_arch import RRDBNet
