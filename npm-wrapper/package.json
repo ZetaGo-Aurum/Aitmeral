@@ -1,7 +1,7 @@
 {
   "name": "aitmeral-enhancer",
   "type": "module",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "AITMERAL — Video Enhancer, Upscaler & RAW Lossless Converter with modern TUI, CLI and local Web UI (npm wrapper for PyPI package)",
   "main": "index.js",
   "bin": {
