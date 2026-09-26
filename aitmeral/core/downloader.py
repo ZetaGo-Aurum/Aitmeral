@@ -11,8 +11,8 @@ import threading
 import time
 from typing import Callable, Optional
 
-from aureus.core.media import human_duration, human_size
-from aureus.core.sysinfo import ytdlp_path
+from aitmeral.core.media import human_duration, human_size
+from aitmeral.core.sysinfo import ytdlp_path
 
 URL_RE = re.compile(r"^https?://", re.I)
 YT_EMBED_RE = re.compile(r"(youtube\.com|youtube-nocookie\.com)/(?:embed|v|shorts|live)/([\w-]{6,})")

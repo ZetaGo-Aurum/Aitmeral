@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# AUREUS one-line installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/ZetaGo-Aurum/Aureus/main/install-npm.sh | bash
-# Or: npm install -g aureus-enhancer
+# AITMERAL one-line installer
+# Usage: curl -fsSL https://raw.githubusercontent.com/ZetaGo-Aurum/Aitmeral/main/install-npm.sh | bash
+# Or: npm install -g aitmeral-enhancer
 
 set -e
 
@@ -28,22 +28,22 @@ if ! command -v npm >/dev/null 2>&1; then
   exit 1
 fi
 
-echo -e "${CYN}▸ Installing AUREUS globally via npm...${RST}"
-if npm install -g aureus-enhancer; then
-  echo -e "${GRN}✓ AUREUS installed globally!${RST}"
+echo -e "${CYN}▸ Installing AITMERAL globally via npm...${RST}"
+if npm install -g aitmeral-enhancer; then
+  echo -e "${GRN}✓ AITMERAL installed globally!${RST}"
 else
   echo -e "${CYN}! npm install failed — trying with sudo...${RST}"
-  if sudo npm install -g aureus-enhancer; then
-    echo -e "${GRN}✓ AUREUS installed globally!${RST}"
+  if sudo npm install -g aitmeral-enhancer; then
+    echo -e "${GRN}✓ AITMERAL installed globally!${RST}"
   else
-    echo "❌ Failed. Try: npm install -g aureus-enhancer"
+    echo "❌ Failed. Try: npm install -g aitmeral-enhancer"
     exit 1
   fi
 fi
 
 echo
 echo -e "${BLD}Selesai! Mulai dengan:${RST}"
-echo "  aureus             # TUI interaktif"
-echo "  aureus server      # Web UI  → http://127.0.0.1:8765"
-echo "  aureus --help      # bantuan lengkap"
-echo "  aureus doctor      # cek sistem (RAM / ffmpeg / yt-dlp)"
+echo "  aitmeral             # TUI interaktif"
+echo "  aitmeral server      # Web UI  → http://127.0.0.1:8765"
+echo "  aitmeral --help      # bantuan lengkap"
+echo "  aitmeral doctor      # cek sistem (RAM / ffmpeg / yt-dlp)"

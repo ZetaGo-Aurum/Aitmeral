@@ -14,24 +14,24 @@ function findPython() {
   return null;
 }
 
-console.log('📦 AUREUS npm wrapper postinstall');
+console.log('📦 AITMERAL npm wrapper postinstall');
 
 const pythonCmd = findPython();
 if (!pythonCmd) {
-  console.log('⚠️  Python 3 not found. AUREUS will be installed on first run.');
-  console.log('   Install Python 3.9+ first, then run: aureus');
+  console.log('⚠️  Python 3 not found. AITMERAL will be installed on first run.');
+  console.log('   Install Python 3.9+ first, then run: aitmeral');
   process.exit(0);
 }
 
 console.log(`🐍 Found Python: ${pythonCmd}`);
 
 try {
-  execSync(`${pythonCmd} -m pip install aureus`, { stdio: 'inherit' });
-  console.log('✅ AUREUS installed successfully!');
+  execSync(`${pythonCmd} -m pip install aitmeral`, { stdio: 'inherit' });
+  console.log('✅ AITMERAL installed successfully!');
 } catch (err) {
-  console.log('⚠️  Auto-install skipped. Run "aureus" to install on first use.');
-  console.log('   Or manually: pip install aureus');
+  console.log('⚠️  Auto-install skipped. Run "aitmeral" to install on first use.');
+  console.log('   Or manually: pip install aitmeral');
 }
 
 console.log('');
-console.log('🚀 Ready! Run "aureus" to start.');
+console.log('🚀 Ready! Run "aitmeral" to start.');

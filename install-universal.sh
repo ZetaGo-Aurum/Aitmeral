@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# AUREUS Universal Installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/ZetaGo-Aurum/Aureus/main/install-universal.sh | bash
+# AITMERAL Universal Installer
+# Usage: curl -fsSL https://raw.githubusercontent.com/ZetaGo-Aurum/Aitmeral/main/install-universal.sh | bash
 # Installs via npm (preferred) or falls back to pip
 
 set -e
@@ -18,7 +18,7 @@ echo
 install_via_npm() {
   if command -v npm >/dev/null 2>&1; then
     echo -e "${CYN}▸ Installing via npm...${RST}"
-    if npm install -g aureus 2>/dev/null || sudo npm install -g aureus; then
+    if npm install -g aitmeral-enhancer 2>/dev/null || sudo npm install -g aitmeral-enhancer; then
       echo -e "${GRN}✓ Installed via npm${RST}"
       return 0
     fi
@@ -32,7 +32,7 @@ install_via_pip() {
   else return 1; fi
   
   echo -e "${CYN}▸ Installing via pip...${RST}"
-  if $PY -m pip install aureus 2>/dev/null || $PY -m pip install --user aureus; then
+  if $PY -m pip install aitmeral 2>/dev/null || $PY -m pip install --user aitmeral; then
     echo -e "${GRN}✓ Installed via pip${RST}"
     return 0
   fi
@@ -43,8 +43,8 @@ install_via_source() {
   echo -e "${CYN}▸ Installing from source...${RST}"
   TMPDIR=$(mktemp -d)
   cd "$TMPDIR"
-  if git clone --depth 1 https://github.com/ZetaGo-Aurum/Aureus.git 2>/dev/null; then
-    cd Aureus
+  if git clone --depth 1 https://github.com/ZetaGo-Aurum/Aitmeral.git 2>/dev/null; then
+    cd Aitmeral
     if command -v python3 >/dev/null 2>&1; then PY=python3
     elif command -v python >/dev/null 2>&1; then PY=python
     else return 1; fi
@@ -63,9 +63,9 @@ elif install_via_source; then
 else
   echo "❌ All installation methods failed."
   echo "   Please install manually:"
-  echo "   npm install -g aureus"
+  echo "   npm install -g aitmeral-enhancer"
   echo "   # or"
-  echo "   pip install aureus"
+  echo "   pip install aitmeral"
   exit 1
 fi
 
@@ -80,7 +80,7 @@ check_bin yt-dlp "optional: pip install yt-dlp"
 
 echo
 echo -e "${BLD}Selesai! Mulai dengan:${RST}"
-echo "  aureus             # TUI interaktif"
-echo "  aureus server      # Web UI  → http://127.0.0.1:8765"
-echo "  aureus --help      # bantuan lengkap"
-echo "  aureus doctor      # cek sistem"
+echo "  aitmeral             # TUI interaktif"
+echo "  aitmeral server      # Web UI  → http://127.0.0.1:8765"
+echo "  aitmeral --help      # bantuan lengkap"
+echo "  aitmeral doctor      # cek sistem"

@@ -21,24 +21,24 @@ function findPython() {
 
 function findAureus(pythonCmd) {
   try {
-    const result = execSync(`${pythonCmd} -m aureus --help`, { 
+    const result = execSync(`${pythonCmd} -m aitmeral --help`, { 
       encoding: 'utf8', 
       stdio: ['ignore', 'pipe', 'ignore'] 
     });
-    if (result.includes('AUREUS')) return true;
+    if (result.includes('AITMERAL')) return true;
   } catch {}
   return false;
 }
 
 function installAureus(pythonCmd) {
-  console.log('📦 Installing AUREUS via pip...');
-  const pipCmd = `${pythonCmd} -m pip install aureus`;
+  console.log('📦 Installing AITMERAL via pip...');
+  const pipCmd = `${pythonCmd} -m pip install aitmeral`;
   const child = spawn(pipCmd, { shell: true, stdio: 'inherit' });
   
   return new Promise((resolve, reject) => {
     child.on('close', (code) => {
       if (code === 0) {
-        console.log('✅ AUREUS installed successfully!');
+        console.log('✅ AITMERAL installed successfully!');
         resolve();
       } else {
         reject(new Error(`pip install failed with code ${code}`));
@@ -51,35 +51,35 @@ async function main() {
   const args = process.argv.slice(2);
   
   if (args.includes('--version') || args.includes('-V')) {
-    console.log('aureus (npm wrapper) v1.0.0');
-    console.log('Python package: aureus@1.0.0');
+    console.log('aitmeral (npm wrapper) v1.0.0');
+    console.log('Python package: aitmeral@1.0.0');
     return;
   }
   
   if (args.includes('--help') || args.includes('-h')) {
     console.log(`
-AUREUS — Video Enhancer, Upscaler & RAW Lossless Converter
+AITMERAL — Video Enhancer, Upscaler & RAW Lossless Converter
 npm wrapper for the Python package
 
 Usage:
-  aureus [command] [options]
+  aitmeral [command] [options]
 
 Commands:
-  aureus              Open TUI interface
-  aureus tui          Open TUI interface
-  aureus server       Start Web UI server
-  aureus convert      Convert video file
-  aureus url          Process video from URL
-  aureus info         Show media info
-  aureus doctor       Check system requirements
-  aureus presets      List output presets
-  aureus effects      List effects & shaders
-  aureus --version    Show version
+  aitmeral              Open TUI interface
+  aitmeral tui          Open TUI interface
+  aitmeral server       Start Web UI server
+  aitmeral convert      Convert video file
+  aitmeral url          Process video from URL
+  aitmeral info         Show media info
+  aitmeral doctor       Check system requirements
+  aitmeral presets      List output presets
+  aitmeral effects      List effects & shaders
+  aitmeral --version    Show version
 
 Installation:
-  npm install -g aureus-enhancer     # Global install (this wrapper)
-  pip install aureus        # Direct Python install
-  bash <(curl -fsSL https://raw.githubusercontent.com/zetagoaurum/Aureus/main/install.sh)
+  npm install -g aitmeral-enhancer     # Global install (this wrapper)
+  pip install aitmeral        # Direct Python install
+  bash <(curl -fsSL https://raw.githubusercontent.com/zetagoaurum/Aitmeral/main/install.sh)
 
 The npm wrapper will auto-install the Python package on first run.
 `);
@@ -96,17 +96,17 @@ The npm wrapper will auto-install the Python package on first run.
   }
 
   if (!findAureus(pythonCmd)) {
-    console.log('🔍 AUREUS not found, installing...');
+    console.log('🔍 AITMERAL not found, installing...');
     try {
       await installAureus(pythonCmd);
     } catch (err) {
-      console.error('❌ Failed to install AUREUS:', err.message);
-      console.error('   Try manually: pip install aureus');
+      console.error('❌ Failed to install AITMERAL:', err.message);
+      console.error('   Try manually: pip install aitmeral');
       process.exit(1);
     }
   }
 
-  const child = spawn(pythonCmd, ['-m', 'aureus', ...args], { 
+  const child = spawn(pythonCmd, ['-m', 'aitmeral', ...args], { 
     stdio: 'inherit',
     shell: true 
   });

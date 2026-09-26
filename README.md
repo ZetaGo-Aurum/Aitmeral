@@ -8,11 +8,11 @@
  /_/   \_\_| | |_|_|  |_|_____|_| \_/_/   \_\_____|
 ```
 
-# AUREUS
+# AITMERAL
 
 **Video Enhancer · Upscaler · RAW Lossless Converter**
 
-TUI interaktif ✦ CLI lengkap ✦ Web UI lokal (`aureus server`) ✦ Linux · Windows · macOS · Termux
+TUI interaktif ✦ CLI lengkap ✦ Web UI lokal (`aitmeral server`) ✦ Linux · Windows · macOS · Termux
 
 [![platform](https://img.shields.io/badge/platform-linux%20%7C%20windows%20%7C%20macos%20%7C%20termux-8f6a1f)]() [![python](https://img.shields.io/badge/python-3.9%2B-3776ab)]() [![ffmpeg](https://img.shields.io/badge/powered%20by-ffmpeg%20%2B%20yt--dlp-e39a2d)]()
 
@@ -32,7 +32,7 @@ TUI interaktif ✦ CLI lengkap ✦ Web UI lokal (`aureus server`) ✦ Linux · W
 | **Link & Embed** | YouTube (watch/embed/shorts/youtu.be) + 1000+ situs lain via yt-dlp, langsung di-convert ke RAW/lossless |
 | **File lokal** | Konversi file lokal apa pun (mp4, mkv, mov, avi, webm, ts, dll.) |
 | **3 antarmuka** | TUI modern (file manager + queue live), CLI penuh flag, Web UI lokal dengan upload, file browser & progress real-time |
-| **Gate spesifikasi** | Cek otomatis **RAM ≥ 8 GB** sebelum konversi (`aureus doctor`), override `--force` / "Proceed anyway" |
+| **Gate spesifikasi** | Cek otomatis **RAM ≥ 8 GB** sebelum konversi (`aitmeral doctor`), override `--force` / "Proceed anyway" |
 | **Encoding stabil & kompatibel** | Preset `superhd` (H.264 CRF 16 + faststart) diputar hampir di semua perangkat; deteksi encoder otomatis + fallback |
 
 ---
@@ -53,27 +53,27 @@ TUI interaktif ✦ CLI lengkap ✦ Web UI lokal (`aureus server`) ✦ Linux · W
 
 ### Metode 1: npm (Paling Mudah — Auto-install Python + Dependencies)
 ```bash
-npm install -g aureus
+npm install -g aitmeral
 # Atau one-line via curl:
-curl -fsSL https://raw.githubusercontent.com/ZetaGo-Aurum/Aureus/main/npm-wrapper/install-npm.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ZetaGo-Aurum/Aitmeral/main/npm-wrapper/install-npm.sh | bash
 ```
 
 ### Metode 2: Universal Installer (Coba npm → pip → source)
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ZetaGo-Aurum/Aureus/main/install-universal.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ZetaGo-Aurum/Aitmeral/main/install-universal.sh | bash
 ```
 
 ### Metode 3: Pip (Python Native)
 ```bash
-pip install aureus
+pip install aitmeral
 # Dengan fitur YouTube:
-pip install "aureus[youtube]"
+pip install "aitmeral[youtube]"
 ```
 
 ### Metode 4: Dari Source (Development)
 ```bash
-git clone https://github.com/ZetaGo-Aurum/Aureus.git
-cd Aureus
+git clone https://github.com/ZetaGo-Aurum/Aitmeral.git
+cd Aitmeral
 pip install -e .
 # Atau jalankan helper:
 bash install.sh
@@ -101,7 +101,7 @@ pkg update && pkg install ffmpeg python git
 pip install yt-dlp
 ```
 
-### 2. Pasang AUREUS
+### 2. Pasang AITMERAL
 
 Dari folder source ini:
 
@@ -117,11 +117,11 @@ Atau cukup jalankan helper: `bash install.sh`
 Verifikasi:
 
 ```bash
-aureus -V
-aureus doctor     # cek RAM, ffmpeg, yt-dlp, encoder & filter
+aitmeral -V
+aitmeral doctor     # cek RAM, ffmpeg, yt-dlp, encoder & filter
 ```
 
-> Sebagai alternatif tanpa instalasi: `python -m aureus --help` dari root folder project.
+> Sebagai alternatif tanpa instalasi: `python -m aitmeral --help` dari root folder project.
 
 ---
 
@@ -130,8 +130,8 @@ aureus doctor     # cek RAM, ffmpeg, yt-dlp, encoder & filter
 ### TUI interaktif (default)
 
 ```bash
-aureus            # langsung membuka TUI
-aureus tui        # sama dengan di atas
+aitmeral            # langsung membuka TUI
+aitmeral tui        # sama dengan di atas
 ```
 
 Panel TUI: **Dashboard** · **File Manager** (browser folder + detail probe) · **Enhance & Convert** (preset, efek, shader) · **URL Grabber** (YouTube/embed) · **Jobs/Queue** (progress live) · **System Info**.
@@ -142,9 +142,9 @@ Screenshot ada di folder [`docs/`](docs/).
 ### Web UI lokal
 
 ```bash
-aureus server                       # buka http://127.0.0.1:8765
-aureus server --port 9000 --host 0.0.0.0
-aureus server --output-dir /mnt/hdd/renders --no-open
+aitmeral server                       # buka http://127.0.0.1:8765
+aitmeral server --port 9000 --host 0.0.0.0
+aitmeral server --output-dir /mnt/hdd/renders --no-open
 ```
 
 Fitur web: paste link YouTube/embed → check info → pilih preset & efek → **START ENHANCE**, upload file (drag & drop), file browser server, progress bar live, preview video hasil, download langsung.
@@ -152,35 +152,35 @@ Fitur web: paste link YouTube/embed → check info → pilih preset & efek → *
 ### CLI
 
 ```bash
-aureus --help
-aureus -h
+aitmeral --help
+aitmeral -h
 
 # File lokal: 480p → 1080p, output paling raw (FFV1 lossless)
-aureus convert video480.mp4 -S 1080p -p raw --effects denoise:2,sharpen:0.5
+aitmeral convert video480.mp4 -S 1080p -p raw --effects denoise:2,sharpen:0.5
 
 # File lokal: hasil paling kompatibel untuk semua device
-aureus convert video.mp4 -S 1080p -p superhd --effects all
+aitmeral convert video.mp4 -S 1080p -p superhd --effects all
 
 # Dari YouTube (termasuk link embed) → lossless
-aureus url "https://www.youtube.com/watch?v=XXXX" -S 1080p -p lossless-x264
-aureus url "https://www.youtube.com/embed/XXXX"   -S 2160p -p hdr10 --hdr
+aitmeral url "https://www.youtube.com/watch?v=XXXX" -S 1080p -p lossless-x264
+aitmeral url "https://www.youtube.com/embed/XXXX"   -S 2160p -p hdr10 --hdr
 
 # SDR → HDR 4K
-aureus convert video.mp4 -S 2160p -p hdr10 --hdr --effects sharpen:0.5,denoise:1
+aitmeral convert video.mp4 -S 2160p -p hdr10 --hdr --effects sharpen:0.5,denoise:1
 
 # Inspeksi media / URL
-aureus info video.mp4
-aureus info "https://youtu.be/XXXX"
+aitmeral info video.mp4
+aitmeral info "https://youtu.be/XXXX"
 
 # Lihat rencana perintah ffmpeg tanpa menjalankan
-aureus convert video.mp4 -S 1080p -p raw --dry-run
+aitmeral convert video.mp4 -S 1080p -p raw --dry-run
 
-aureus presets      # daftar 10 preset output
-aureus effects      # daftar efek & shader
-aureus doctor       # cek sistem
+aitmeral presets      # daftar 10 preset output
+aitmeral effects      # daftar efek & shader
+aitmeral doctor       # cek sistem
 ```
 
-#### Flag penting `aureus convert / url`
+#### Flag penting `aitmeral convert / url`
 
 | Flag | Nilai | Keterangan |
 |---|---|---|
@@ -196,14 +196,14 @@ aureus doctor       # cek sistem
 | `--chroma` | `auto 420 422 444 rgb` | subsampling kroma |
 | `--depth` | `auto 8 10 12` | bit depth |
 | `--crf` | 14–28 | override kualitas untuk preset lossy |
-| `--quality` | `best 2160 1440 1080 720 480` | kualitas download (khusus `aureus url`) |
+| `--quality` | `best 2160 1440 1080 720 480` | kualitas download (khusus `aitmeral url`) |
 | `-o, --output` | direktori | lokasi output (default: dir file input / cwd) |
 | `--force` | — | jalankan meski RAM < 8 GB |
 | `--dry-run` | — | tampilkan perintah ffmpeg saja |
 
 ---
 
-## 🎚 Preset Output (`aureus presets`)
+## 🎚 Preset Output (`aitmeral presets`)
 
 | Key | Preset | Jenis | Kompatibilitas | Ukuran / menit @1080p |
 |---|---|---|---|---|
@@ -220,7 +220,7 @@ aureus doctor       # cek sistem
 
 ---
 
-## 🎛 Efek & Shader (`aureus effects`)
+## 🎛 Efek & Shader (`aitmeral effects`)
 
 | Efek | Flag/Setting | Keterangan |
 |---|---|---|
@@ -242,12 +242,12 @@ aureus doctor       # cek sistem
 
 - **SDR→HDR** bekerja dengan mengonversi ke cahaya linear → BT.2020 → PQ (SMPTE 2084) lewat zimg, lalu memberi sinyal metadata HDR10 pada stream HEVC. Hasil terbaik diputar di display HDR; di display SDR warna bisa terlihat pudar (wajar, karena butuh decoding HDR).
 - **Sumber HDR** dideteksi otomatis: preset RAW/lossless menyimpannya tetap sebagai HDR 10-bit; preset 8-bit (mis. `superhd`) otomatis tone-map ke SDR BT.709.
-- Build ffmpeg tanpa `zscale` tetap didukung — AUREUS otomatis fallback ke 10-bit + signaling metadata (cek dengan `aureus doctor`).
+- Build ffmpeg tanpa `zscale` tetap didukung — AITMERAL otomatis fallback ke 10-bit + signaling metadata (cek dengan `aitmeral doctor`).
 
 ## ⚠️ Catatan jujur soal "RAW"
 
 - Preset `raw`/`y4m`/`lossless-*` menjamin **tidak ada degradasi sama sekali** dari hasil proses enhancement — cocok untuk arsip, re-encode berkali-kali, atau editing.
-- Upscale **tidak bisa menciptakan detail yang memang tidak ada** di video sumber; yang AUREUS lakukan adalah menaikkan resolusi dengan algoritma terbaik + menjernihkan + menjaga setiap piksel hasilnya secara lossless.
+- Upscale **tidak bisa menciptakan detail yang memang tidak ada** di video sumber; yang AITMERAL lakukan adalah menaikkan resolusi dengan algoritma terbaik + menjernihkan + menjaga setiap piksel hasilnya secara lossless.
 - File RAW itu BESAR. 10 menit video 1080p bisa 20–80 GB (Y4M). Untuk distribusi ke HP/TV gunakan `superhd` atau `hq-hevc`.
 
 ---
@@ -256,22 +256,22 @@ aureus doctor       # cek sistem
 
 | Masalah | Solusi |
 |---|---|
-| `ffmpeg NOT FOUND` | `apt/brew/winget/pkg install ffmpeg` — lalu `aureus doctor` |
+| `ffmpeg NOT FOUND` | `apt/brew/winget/pkg install ffmpeg` — lalu `aitmeral doctor` |
 | `yt-dlp NOT FOUND` | `pip install yt-dlp` (fitur URL butuh ini) |
 | Ditolak: "requires at least 8 GB" | Sesuai spesifikasi. Override: `--force` (CLI) / centang *Proceed anyway* (Web/TUI) |
 | Download YouTube gagal / 403 | Update yt-dlp: `pip install -U yt-dlp` |
-| `no path between colorspaces` (HDR) | Jarang terjadi — pastikan ffmpeg terbaru; AUREUS sudah men-tag otomatis sumber tanpa metadata warna |
+| `no path between colorspaces` (HDR) | Jarang terjadi — pastikan ffmpeg terbaru; AITMERAL sudah men-tag otomatis sumber tanpa metadata warna |
 | Playback FFV1/Y4M gagal | Normal — codec arsip. Putar dengan VLC/mpv/ffplay, atau konversi ulang ke `superhd` untuk distribusi |
-| Port 8765 terpakai | `aureus server --port 9000` |
+| Port 8765 terpakai | `aitmeral server --port 9000` |
 
 ---
 
 ## 🏗 Struktur Proyek
 
 ```
-aureus/
-├── aureus/
-│   ├── cli.py               # CLI (argparse) — aureus --help
+aitmeral/
+├── aitmeral/
+│   ├── cli.py               # CLI (argparse) — aitmeral --help
 │   ├── core/
 │   │   ├── options.py       # Settings — kontrak tunggal CLI/TUI/Web
 │   │   ├── presets.py       # 10 preset output + efek
@@ -298,5 +298,5 @@ aureus/
 MIT License. Gunakan hanya untuk konten yang Anda miliki haknya — mengunduh materi berhak cipta dari YouTube/situs lain tanpa izin dapat melanggar ketentuan layanan mereka dan hukum yang berlaku.
 
 <div align="center">
-<sub>AUREUS v1.0.0 — dibangun di atas <b>ffmpeg</b>, <b>yt-dlp</b>, <b>Textual</b> & <b>rich</b></sub>
+<sub>AITMERAL v1.0.0 — dibangun di atas <b>ffmpeg</b>, <b>yt-dlp</b>, <b>Textual</b> & <b>rich</b></sub>
 </div>

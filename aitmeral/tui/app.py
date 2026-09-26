@@ -1,4 +1,4 @@
-"""AUREUS interactive TUI — modern Textual interface with file manager & live queue."""
+"""AITMERAL interactive TUI — modern Textual interface with file manager & live queue."""
 
 from __future__ import annotations
 
@@ -12,11 +12,11 @@ from textual.screen import ModalScreen
 from textual.widgets import (Button, DataTable, DirectoryTree, Footer, Header,
                              Input, ListItem, ListView, Static, Select, Switch)
 
-from aureus import __version__
-from aureus.core import media, sysinfo
-from aureus.core.jobs import JobManager
-from aureus.core.options import Settings
-from aureus.core.presets import get_preset, preset_summaries
+from aitmeral import __version__
+from aitmeral.core import media, sysinfo
+from aitmeral.core.jobs import JobManager
+from aitmeral.core.options import Settings
+from aitmeral.core.presets import get_preset, preset_summaries
 
 LOGO = """[bold #f6d38b]     _    _ _____ __  __ _____ ____      _    _
 [/][bold #eec271]    / \\  | |_   _|  \\/  | ____|  _ \\    / \\  | |
@@ -73,7 +73,7 @@ class ConfirmScreen(ModalScreen[bool]):
 
 
 class AureusApp(App):
-    TITLE = "AUREUS"
+    TITLE = "AITMERAL"
     SUB_TITLE = f"v{__version__} — Video Enhancer & Upscaler"
 
     CSS = """
@@ -352,7 +352,7 @@ class AureusApp(App):
         elif bid == "files-use":
             if self._files_selected:
                 self.query_one("#eh-input", Input).value = self._files_selected
-                self.notify("File dimuat ke Enhance panel", title="AUREUS", severity="information")
+                self.notify("File dimuat ke Enhance panel", title="AITMERAL", severity="information")
                 self.show_pane("enhance")
         elif bid == "eh-browse":
             self.show_pane("files")
@@ -455,7 +455,7 @@ class AureusApp(App):
         if not url:
             self.notify("Tempel URL video dulu", severity="warning")
             return
-        from aureus.core.downloader import is_url
+        from aitmeral.core.downloader import is_url
         if not is_url(url):
             self.notify("URL tidak valid (harus diawali http/https)", severity="error")
             return
@@ -467,7 +467,7 @@ class AureusApp(App):
     def _submit_job(self, kind: str, source: str) -> None:
         if sysinfo.total_ram_gb() < 8:
             self.push_screen(ConfirmScreen(
-                "Perangkat ini RAM-nya di bawah 8 GB (spesifikasi minimum AUREUS).\n"
+                "Perangkat ini RAM-nya di bawah 8 GB (spesifikasi minimum AITMERAL).\n"
                 "Lanjutkan konversi juga? (proses bisa lambat / tidak stabil)"),
                 lambda ok: self._really_submit(kind, source, ok))
         else:
@@ -495,7 +495,7 @@ class AureusApp(App):
         self.run_worker(lambda: self._do_check_url(url), thread=True, group="urlprobe")
 
     def _do_check_url(self, url: str) -> None:
-        from aureus.core import downloader
+        from aitmeral.core import downloader
         try:
             d = downloader.probe_url(url)
             txt = (f"[bold #f0c76a]{d['title']}[/]\n"

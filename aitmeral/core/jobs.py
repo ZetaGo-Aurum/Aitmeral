@@ -11,10 +11,10 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
-from aureus.core import pipeline
-from aureus.core.media import human_size
-from aureus.core.options import Settings
-from aureus.core.sysinfo import total_ram_gb
+from aitmeral.core import pipeline
+from aitmeral.core.media import human_size
+from aitmeral.core.options import Settings
+from aitmeral.core.sysinfo import total_ram_gb
 
 
 class JobStatus:
@@ -91,7 +91,7 @@ class JobManager:
         self.max_workers = max(1, int(max_workers))
         self._stop = threading.Event()
         for i in range(self.max_workers):
-            threading.Thread(target=self._worker, name=f"aureus-worker-{i}", daemon=True).start()
+            threading.Thread(target=self._worker, name=f"aitmeral-worker-{i}", daemon=True).start()
 
     # ------------------------------------------------------------- public
     def submit(self, kind: str, source: str, settings: dict, output_dir: Optional[str] = None) -> Job:

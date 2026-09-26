@@ -1,10 +1,10 @@
-"""AUREUS command line interface.
+"""AITMERAL command line interface.
 
-    aureus                 → launch the interactive TUI
-    aureus convert FILE    → enhance/upscale a local file
-    aureus url  LINK       → download (YouTube embed/watch, 1000+ sites) + enhance
-    aureus server          → start the local web UI
-    aureus doctor          → system & dependency check
+    aitmeral                 → launch the interactive TUI
+    aitmeral convert FILE    → enhance/upscale a local file
+    aitmeral url  LINK       → download (YouTube embed/watch, 1000+ sites) + enhance
+    aitmeral server          → start the local web UI
+    aitmeral doctor          → system & dependency check
 """
 
 from __future__ import annotations
@@ -14,13 +14,13 @@ import os
 import sys
 import threading
 
-from aureus import __version__
-from aureus.core import media, pipeline, sysinfo
-from aureus.core.options import (
+from aitmeral import __version__
+from aitmeral.core import media, pipeline, sysinfo
+from aitmeral.core.options import (
     AUDIO_MODES, CHROMA_MODES, DEPTH_MODES, FPS_MODES, SCALERS, SHADERS,
     TONE_MAP_MODES, Settings, HWACCEL_MODES,
 )
-from aureus.core.presets import get_preset, preset_summaries
+from aitmeral.core.presets import get_preset, preset_summaries
 
 # ------------------------------------------------------------------ banner
 BANNER = r"""
@@ -84,7 +84,7 @@ def _parse_effects(spec: str, s: Settings):
 
 def add_common(p: argparse.ArgumentParser):
     p.add_argument("-p", "--preset", default="superhd", metavar="KEY",
-                   help="output preset (default: superhd). See `aureus presets`.")
+                   help="output preset (default: superhd). See `aitmeral presets`.")
     p.add_argument("-S", "--scale", default="source",
                    help="target resolution: source | 2x | 4x | 480p | 720p | 1080p | 1440p | 2160p | WxH (default: source)")
     p.add_argument("--scaler", default="lanczos", choices=SCALERS, help="scaling algorithm (default: lanczos)")
@@ -243,7 +243,7 @@ def cmd_convert(args) -> int:
 
 
 def encoder_pretty(cmd):
-    from aureus.core.encoder import pretty_cmd
+    from aitmeral.core.encoder import pretty_cmd
     return pretty_cmd(cmd)
 
 
@@ -252,7 +252,7 @@ def cmd_url(args) -> int:
     from rich.panel import Panel
 
     console = Console()
-    from aureus.core import downloader
+    from aitmeral.core import downloader
     try:
         settings = settings_from_args(args)
         settings.quality = args.quality
@@ -309,7 +309,7 @@ def cmd_url(args) -> int:
 
 
 def cmd_server(args) -> int:
-    from aureus.web.server import run_server
+    from aitmeral.web.server import run_server
     return run_server(host=args.host, port=args.port,
                       output_dir=os.path.abspath(os.path.expanduser(args.output_dir)),
                       allow_low_ram=args.allow_low_ram, open_browser=not args.no_open)
@@ -323,9 +323,9 @@ def cmd_info(args) -> int:
     src = args.source
     if sysinfo.platform_key() == "windows":
         src = src.replace("\\", "/")
-    from aureus.core.downloader import is_url
+    from aitmeral.core.downloader import is_url
     if is_url(src):
-        from aureus.core import downloader
+        from aitmeral.core import downloader
         try:
             d = downloader.probe_url(src)
             t = Table(title="🌐 URL", title_style="bold #f6d38b", show_header=False, border_style="#5a4a20")
@@ -366,17 +366,17 @@ def cmd_doctor(args) -> int:
     console = Console()
     sysinfo.get_caps(refresh=True)
     rows, healthy = sysinfo.system_report()
-    t = Table(title="🩺 AUREUS System Check", title_style="bold #f6d38b", show_header=False, border_style="#5a4a20")
+    t = Table(title="🩺 AITMERAL System Check", title_style="bold #f6d38b", show_header=False, border_style="#5a4a20")
     for k, v in rows:
         style = "bold red" if ("NOT FOUND" in v or "BELOW" in v) else "white"
         t.add_row(f"[bold #f6d38b]{k}[/bold #f6d38b]", f"[{style}]{v}[/{style}]")
     console.print(t)
     console.print()
     if healthy:
-        console.print(Panel.fit("[bold #8fd18f]✔ All requirements satisfied — AUREUS is ready.[/bold #8fd18f]", border_style="#2f5a3a"))
+        console.print(Panel.fit("[bold #8fd18f]✔ All requirements satisfied — AITMERAL is ready.[/bold #8fd18f]", border_style="#2f5a3a"))
         return 0
     console.print(Panel.fit(
-        "[bold yellow]⚠ Some requirements are missing. AUREUS needs ffmpeg + ffprobe to convert, "
+        "[bold yellow]⚠ Some requirements are missing. AITMERAL needs ffmpeg + ffprobe to convert, "
         "yt-dlp for URL downloads, and ≥ 8 GB RAM (override with --force).[/bold yellow]",
         border_style="#8f6a1f"))
     return 2
@@ -398,7 +398,7 @@ def cmd_presets(args) -> int:
         stars = "★" * p["compat"] + "☆" * (5 - p["compat"])
         t.add_row(p["key"], p["label"] + f"\n[dim]{p['desc']}[/dim]", f"[{badge_color}]{p['badge']}[/]", stars, p["size_note"])
     console.print(t)
-    console.print("[dim]Usage: aureus convert input.mp4 -p raw -S 1080p[/dim]")
+    console.print("[dim]Usage: aitmeral convert input.mp4 -p raw -S 1080p[/dim]")
     return 0
 
 
@@ -406,7 +406,7 @@ def cmd_effects(args) -> int:
     from rich.console import Console
     from rich.table import Table
 
-    from aureus.core.presets import effect_summaries
+    from aitmeral.core.presets import effect_summaries
     console = Console()
     t = Table(title="🎛 Effects & Shaders", title_style="bold #f6d38b", border_style="#5a4a20")
     t.add_column("Key", style="bold #f6d38b")
@@ -415,7 +415,7 @@ def cmd_effects(args) -> int:
     for e in effect_summaries():
         t.add_row(e["key"], e["label"], e["desc"])
     console.print(t)
-    console.print("[dim]Usage: aureus convert in.mp4 --effects denoise:2,sharpen:0.5,deband,hdr[/dim]")
+    console.print("[dim]Usage: aitmeral convert in.mp4 --effects denoise:2,sharpen:0.5,deband,hdr[/dim]")
     return 0
 
 
@@ -425,13 +425,13 @@ def cmd_tui(args) -> int:
 
 def launch_tui() -> int:
     try:
-        from aureus.tui.app import AureusApp
+        from aitmeral.tui.app import AureusApp
     except ImportError as exc:
         from rich.console import Console
         Console().print(f"[bold red]TUI dependencies missing:[/bold red] {exc}\n"
                         "Install with: [bold]pip install textual rich[/bold]")
         return 1
-    from aureus.core.jobs import JobManager
+    from aitmeral.core.jobs import JobManager
     app = AureusApp(job_manager=JobManager(output_dir=os.path.abspath("aureus_output")))
     app.run()
     return 0
@@ -440,21 +440,21 @@ def launch_tui() -> int:
 # ------------------------------------------------------------------ parser
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="aureus",
-        description="AUREUS — Video Enhancer, Upscaler & RAW Lossless Converter.\n"
+        prog="aitmeral",
+        description="AITMERAL — Video Enhancer, Upscaler & RAW Lossless Converter.\n"
                     "Converts local files and links (YouTube & 1000+ sites) into RAW / lossless / HDR / max-compatibility output.",
         epilog=(
             "examples:\n"
-            "  aureus                                   # interactive TUI\n"
-            "  aureus server                            # local web UI at http://127.0.0.1:8765\n"
-            "  aureus convert video.mp4 -S 1080p -p raw --effects denoise:2,sharpen:0.5\n"
-            "  aureus url \"https://youtu.be/xyz\" -S 1080p -p lossless-x264 --quality 1080\n"
-            "  aureus convert video.mp4 -p hdr10 --hdr -S 2160p          # SDR→HDR 4K\n"
-            "  aureus doctor                            # check system requirements\n"
+            "  aitmeral                                   # interactive TUI\n"
+            "  aitmeral server                            # local web UI at http://127.0.0.1:8765\n"
+            "  aitmeral convert video.mp4 -S 1080p -p raw --effects denoise:2,sharpen:0.5\n"
+            "  aitmeral url \"https://youtu.be/xyz\" -S 1080p -p lossless-x264 --quality 1080\n"
+            "  aitmeral convert video.mp4 -p hdr10 --hdr -S 2160p          # SDR→HDR 4K\n"
+            "  aitmeral doctor                            # check system requirements\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    p.add_argument("-V", "--version", action="version", version=f"AUREUS {__version__}")
+    p.add_argument("-V", "--version", action="version", version=f"AITMERAL {__version__}")
     sub = p.add_subparsers(dest="command")
 
     c = sub.add_parser("convert", help="enhance/upscale a local video file",
@@ -473,7 +473,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_common(u)
     u.set_defaults(func=cmd_url)
 
-    s = sub.add_parser("server", help="run the local AUREUS web UI",
+    s = sub.add_parser("server", help="run the local AITMERAL web UI",
                        description="Start the local web UI (browser-based interface with uploads, file browser and live progress).")
     s.add_argument("--host", default="127.0.0.1", help="bind address (default: 127.0.0.1)")
     s.add_argument("--port", type=int, default=8765, help="port (default: 8765)")
@@ -495,7 +495,7 @@ def build_parser() -> argparse.ArgumentParser:
     ef = sub.add_parser("effects", help="list effects & shaders")
     ef.set_defaults(func=cmd_effects)
 
-    t = sub.add_parser("tui", help="launch the interactive TUI (same as bare 'aureus')")
+    t = sub.add_parser("tui", help="launch the interactive TUI (same as bare 'aitmeral')")
     t.set_defaults(func=cmd_tui)
 
     return p

@@ -8,7 +8,7 @@ import subprocess
 from dataclasses import dataclass, field
 from typing import Optional
 
-from aureus.core.sysinfo import ffprobe_path
+from aitmeral.core.sysinfo import ffprobe_path
 
 VIDEO_EXTS = {
     ".mp4", ".mkv", ".mov", ".avi", ".webm", ".flv", ".ts", ".m2ts", ".mts",

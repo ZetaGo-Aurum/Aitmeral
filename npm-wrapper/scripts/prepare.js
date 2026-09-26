@@ -9,6 +9,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = join(__filename, '..', '..');
 
 try {
-  chmodSync(join(__dirname, 'bin', 'aureus.js'), 0o755);
+  chmodSync(join(__dirname, 'bin', 'aitmeral.js'), 0o755);
   chmodSync(join(__dirname, 'index.js'), 0o755);
 } catch {}

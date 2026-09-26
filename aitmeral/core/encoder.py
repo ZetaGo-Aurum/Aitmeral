@@ -9,11 +9,11 @@ import threading
 import time
 from typing import Callable, List, Optional
 
-from aureus.core.filters import FilterResult, build_filters
-from aureus.core.media import MediaInfo
-from aureus.core.options import Settings
-from aureus.core.presets import OutputPreset, get_preset
-from aureus.core.sysinfo import Caps, get_caps
+from aitmeral.core.filters import FilterResult, build_filters
+from aitmeral.core.media import MediaInfo
+from aitmeral.core.options import Settings
+from aitmeral.core.presets import OutputPreset, get_preset
+from aitmeral.core.sysinfo import Caps, get_caps
 
 PROGRESS_RE = re.compile(r"^([a-z_]+)=(.*)$")
 
@@ -68,18 +68,19 @@ class EncodingError(RuntimeError):
 
 
 def _video_args(preset: OutputPreset, container: str, s: Settings, caps: Caps, notes: list,
-                hdr_out: bool = False) -> List[str]:
+                hdr_out: bool = False, hwaccel_works: bool = False) -> List[str]:
     args: List[str] = []
     codec = preset.vcodec
     params = list(preset.args)
 
-    # Hardware encoder selection
-    hw_codec, hw_name = _select_hw_encoder(codec, caps, s)
-    if hw_codec:
-        codec = hw_codec
-        notes.append(f"Using hardware encoder: {hw_name} ({hw_codec})")
-        # Rebuild params for hardware encoder
-        params = _build_hw_encoder_params(codec, s, preset, container, notes)
+    # Hardware encoder selection (only if hwaccel works)
+    if hwaccel_works:
+        hw_codec, hw_name = _select_hw_encoder(codec, caps, s)
+        if hw_codec:
+            codec = hw_codec
+            notes.append(f"Using hardware encoder: {hw_name} ({hw_codec})")
+            # Rebuild params for hardware encoder
+            params = _build_hw_encoder_params(codec, s, preset, container, notes)
 
     # HDR signaling (PQ/BT.2020 tags) is only correct when the pipeline really outputs HDR
     if not hdr_out and "-x265-params" in params:
@@ -284,14 +285,20 @@ def build_command(src: str, out: str, s: Settings, info: Optional[MediaInfo], ca
 
     # Hardware acceleration: input-side hwaccel for decoding
     hwaccel = _get_hwaccel_flag(s, caps)
+    hwaccel_works = False
     if hwaccel:
-        cmd += ["-hwaccel", hwaccel]
+        # Test if hwaccel actually works (e.g., CUDA drivers installed)
+        if _test_hwaccel(hwaccel):
+            cmd += ["-hwaccel", hwaccel]
+            hwaccel_works = True
+        else:
+            notes.append(f"Hardware acceleration '{hwaccel}' not available (drivers missing?) — falling back to software")
 
     cmd += ["-i", src]
 
     # Build filter chain with hardware upload/download if using hardware encoder
     filters = list(fres.filters)
-    hw_encoder = _get_hw_encoder_type(s, caps, preset.vcodec)
+    hw_encoder = _get_hw_encoder_type(s, caps, preset.vcodec) if hwaccel_works else None
     if hw_encoder:
         # Add hwupload before filters, hwdownload after filters
         upload_filter = HW_UPLOAD_FILTERS.get(hw_encoder)
@@ -307,7 +314,7 @@ def build_command(src: str, out: str, s: Settings, info: Optional[MediaInfo], ca
 
     cmd += ["-map", "0:v:0", "-map", "0:a?"]
     hdr_out = fres.hdr_expand or (info is not None and info.hdr and not fres.tonemap_down)
-    cmd += _video_args(preset, container, s, caps, notes, hdr_out=hdr_out)
+    cmd += _video_args(preset, container, s, caps, notes, hdr_out=hdr_out, hwaccel_works=hwaccel_works)
     cmd += ["-pix_fmt", fres.pix_fmt]
 
     if container == "mkv" and info is not None and info.has_subs:
@@ -368,6 +375,23 @@ def _get_hwaccel_flag(s: Settings, caps: Caps) -> Optional[str]:
         if caps.has_hwaccel("videotoolbox"):
             return "videotoolbox"
     return None
+
+
+def _test_hwaccel(hwaccel: str) -> bool:
+    """Test if hardware acceleration actually works by running a quick ffmpeg probe."""
+    import subprocess
+    try:
+        # Quick test: try to decode a dummy frame with the hwaccel
+        result = subprocess.run([
+            "ffmpeg", "-hide_banner", "-nostdin", "-v", "error",
+            "-init_hw_device", f"{hwaccel}=hw",
+            "-f", "lavfi", "-i", "testsrc=duration=0.1:size=32x32:rate=1",
+            "-vf", f"hwdownload,format=nv12",
+            "-f", "null", "-"
+        ], capture_output=True, timeout=10)
+        return result.returncode == 0
+    except Exception:
+        return False
 
 
 def _get_hw_encoder_type(s: Settings, caps: Caps, software_codec: str) -> Optional[str]:

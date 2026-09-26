@@ -6,10 +6,10 @@ import re
 from dataclasses import dataclass, field
 from typing import Optional, Tuple
 
-from aureus.core.media import MediaInfo
-from aureus.core.options import Settings
-from aureus.core.presets import OutputPreset, get_preset
-from aureus.core.sysinfo import Caps, get_caps
+from aitmeral.core.media import MediaInfo
+from aitmeral.core.options import Settings
+from aitmeral.core.presets import OutputPreset, get_preset
+from aitmeral.core.sysinfo import Caps, get_caps
 
 TARGET_HEIGHTS = {240, 360, 480, 576, 720, 1080, 1440, 2160}
 MAX_DIM = 7680

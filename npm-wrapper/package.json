@@ -1,12 +1,12 @@
 {
-  "name": "aureus-enhancer",
+  "name": "aitmeral-enhancer",
   "type": "module",
   "version": "1.0.3",
-  "description": "AUREUS — Video Enhancer, Upscaler & RAW Lossless Converter with modern TUI, CLI and local Web UI (npm wrapper for PyPI package)",
+  "description": "AITMERAL — Video Enhancer, Upscaler & RAW Lossless Converter with modern TUI, CLI and local Web UI (npm wrapper for PyPI package)",
   "main": "index.js",
   "bin": {
-    "aureus": "bin/aureus.js",
-    "aureus-enhancer": "bin/aureus.js"
+    "aitmeral": "bin/aitmeral.js",
+    "aitmeral-enhancer": "bin/aitmeral.js"
   },
   "scripts": {
     "postinstall": "node scripts/postinstall.js",
@@ -28,16 +28,16 @@
     "web-ui",
     "cli"
   ],
-  "author": "AUREUS Project",
+  "author": "AITMERAL Project",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ZetaGo-Aurum/Aureus.git"
+    "url": "https://github.com/ZetaGo-Aurum/Aitmeral.git"
   },
   "bugs": {
-    "url": "https://github.com/ZetaGo-Aurum/Aureus/issues"
+    "url": "https://github.com/ZetaGo-Aurum/Aitmeral/issues"
   },
-  "homepage": "https://github.com/ZetaGo-Aurum/Aureus#readme",
+  "homepage": "https://github.com/ZetaGo-Aurum/Aitmeral#readme",
   "engines": {
     "node": ">=14.0.0"
   },

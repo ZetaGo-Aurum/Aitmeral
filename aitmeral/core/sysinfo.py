@@ -11,7 +11,7 @@ import subprocess
 import sys
 import threading
 
-from aureus import MIN_RAM_GB, __version__
+from aitmeral import MIN_RAM_GB, __version__
 
 _LOCK = threading.Lock()
 _CAPS_CACHE = None
@@ -214,7 +214,7 @@ def get_caps(refresh: bool = False) -> Caps:
 
 # ---------------------------------------------------------------- report
 def system_report() -> "tuple[list, bool]":
-    """Build the `aureus doctor` report. Returns (rows, healthy)."""
+    """Build the `aitmeral doctor` report. Returns (rows, healthy)."""
     ff = ffmpeg_path()
     fp = ffprobe_path()
     ytd = ytdlp_path()
@@ -223,7 +223,7 @@ def system_report() -> "tuple[list, bool]":
 
     ram_txt = "OK (>= 8 GB requirement)" if ram >= MIN_RAM_GB else "BELOW the 8 GB minimum! Override with --force."
     rows = [
-        ("AUREUS", f"v{__version__} — Video Enhancer / Upscaler / RAW Lossless"),
+        ("AITMERAL", f"v{__version__} — Video Enhancer / Upscaler / RAW Lossless"),
         ("Platform", f"{platform_name()} · Python {sys.version.split()[0]} · {os.cpu_count() or '?'} CPU cores"),
         ("RAM", f"{ram:.2f} GB — {ram_txt}"),
         ("ffmpeg", (f"OK — {binary_version(ff)}" if ff else "NOT FOUND — install: apt install ffmpeg | brew install ffmpeg | winget install Gyan.FFmpeg | pkg install ffmpeg (Termux)")),

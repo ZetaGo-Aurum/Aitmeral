@@ -1,4 +1,4 @@
-"""AUREUS local web server — `aureus server`.
+"""AITMERAL local web server — `aitmeral server`.
 
 Pure standard-library HTTP server (no extra dependencies) serving the web UI
 and a JSON API consumed by it. Includes upload, file browsing, job control
@@ -19,11 +19,11 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlparse
 
-from aureus import __version__
-from aureus.core import downloader, media, sysinfo
-from aureus.core.jobs import ACTIVE, JobManager
-from aureus.core.options import Settings
-from aureus.core.presets import effect_summaries, preset_summaries
+from aitmeral import __version__
+from aitmeral.core import downloader, media, sysinfo
+from aitmeral.core.jobs import ACTIVE, JobManager
+from aitmeral.core.options import Settings
+from aitmeral.core.presets import effect_summaries, preset_summaries
 
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
@@ -66,7 +66,7 @@ def _job_public(job):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = f"Aureus/{__version__}"
+    server_version = f"Aitmeral/{__version__}"
     protocol_version = "HTTP/1.1"
 
     # ------------------------------------------------------------ plumbing
@@ -183,7 +183,7 @@ class Handler(BaseHTTPRequestHandler):
                 caps = sysinfo.get_caps()
                 ytd = sysinfo.ytdlp_path()
                 self._json({
-                    "app": "AUREUS", "version": __version__,
+                    "app": "AITMERAL", "version": __version__,
                     "platform": sysinfo.platform_key(),
                     "platform_name": sysinfo.platform_name(),
                     "python": sys.version.split()[0],

@@ -9,12 +9,12 @@ import time
 from dataclasses import dataclass, field
 from typing import Callable, Optional
 
-from aureus import MIN_RAM_GB
-from aureus.core import downloader, encoder, media
-from aureus.core.media import MediaInfo, human_size
-from aureus.core.options import Settings
-from aureus.core.presets import get_preset
-from aureus.core.sysinfo import total_ram_gb
+from aitmeral import MIN_RAM_GB
+from aitmeral.core import downloader, encoder, media
+from aitmeral.core.media import MediaInfo, human_size
+from aitmeral.core.options import Settings
+from aitmeral.core.presets import get_preset
+from aitmeral.core.sysinfo import total_ram_gb
 
 ReportFn = Callable[[str, float, str], None]  # (stage, fraction 0..1 or -1, detail)
 
@@ -58,7 +58,7 @@ def sanitize_stem(path: str) -> str:
 
 def output_filename(src_path: str, s: Settings, fres, preset_key: str) -> str:
     preset = get_preset(preset_key)
-    parts = [sanitize_stem(src_path), "aureus"]
+    parts = [sanitize_stem(src_path), "aitmeral"]
     if fres.target_wh:
         parts.append(f"{fres.target_wh[1]}p")
     if fres.hdr_expand:
@@ -97,7 +97,7 @@ def run_job(kind: str,
     ram = total_ram_gb()
     if ram < MIN_RAM_GB and not settings.force:
         raise RequirementError(
-            f"This device has {ram:.2f} GB RAM. AUREUS requires at least {MIN_RAM_GB:.0f} GB "
+            f"This device has {ram:.2f} GB RAM. AITMERAL requires at least {MIN_RAM_GB:.0f} GB "
             "for stable conversion. Re-run with --force (CLI) or enable 'Proceed anyway' to override."
         )
     if ram < MIN_RAM_GB:

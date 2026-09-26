@@ -3,13 +3,13 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "aureus-enhancer"
+name = "aitmeral-enhancer"
 version = "1.0.0"
-description = "AUREUS — Video Enhancer, Upscaler & RAW Lossless Converter with modern TUI, CLI and local Web UI"
+description = "AITMERAL — Video Enhancer, Upscaler & RAW Lossless Converter with modern TUI, CLI and local Web UI"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-authors = [{ name = "AUREUS Project" }]
+authors = [{ name = "AITMERAL Project" }]
 keywords = [
   "video", "upscaler", "enhancer", "ffmpeg", "hdr", "sdr",
   "lossless", "raw", "yt-dlp", "tui", "textual", "web-ui",
@@ -32,10 +32,10 @@ dependencies = [
 youtube = ["yt-dlp"]
 
 [project.scripts]
-aureus = "aureus.cli:main"
+aitmeral = "aitmeral.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["aureus*"]
+include = ["aitmeral*"]
 
 [tool.setuptools.package-data]
-aureus = ["web/static/*"]
+aitmeral = ["web/static/*"]
