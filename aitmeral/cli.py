@@ -19,6 +19,7 @@ from aitmeral.core import media, pipeline, sysinfo
 from aitmeral.core.options import (
     AUDIO_MODES, CHROMA_MODES, DEPTH_MODES, FPS_MODES, SCALERS, SHADERS,
     TONE_MAP_MODES, Settings, HWACCEL_MODES,
+    AI_ENGINES, MMAGIC_MODELS, REALESRGAN_MODELS, PROCESS_MODES,
 )
 from aitmeral.core.presets import get_preset, preset_summaries
 
@@ -83,13 +84,18 @@ def _parse_effects(spec: str, s: Settings):
 
 
 def add_common(p: argparse.ArgumentParser):
+    # Processing mode
+    p.add_argument("--mode", default="auto", choices=PROCESS_MODES,
+                   help="processing mode: video | image | auto (default: auto)")
+    
+    # Traditional ffmpeg settings
     p.add_argument("-p", "--preset", default="superhd", metavar="KEY",
                    help="output preset (default: superhd). See `aitmeral presets`.")
     p.add_argument("-S", "--scale", default="source",
                    help="target resolution: source | 2x | 4x | 480p | 720p | 1080p | 1440p | 2160p | WxH (default: source)")
     p.add_argument("--scaler", default="lanczos", choices=SCALERS, help="scaling algorithm (default: lanczos)")
     p.add_argument("--effects", default="", metavar="LIST",
-                   help="comma list: denoise[:1-3], sharpen[:0-1], grain[:1-12], deband, deblock, deinterlace, hdr, tone-map, color-boost, all")
+                   help="comma list: denoise[:1-3], sharpen[:0-1], grain[:1-12], deband, deblock, deinterlace, hdr, tone-map, color-boost, all, ai-upscale, ai-face-enhance, ai-colorize, ai-denoise, ai-interpolate")
     p.add_argument("--shader", default="cas", choices=SHADERS, help="sharpen shader (default: cas)")
     p.add_argument("--denoise", type=int, default=0, choices=[0, 1, 2, 3], help="denoise level 0-3 (default: 0)")
     p.add_argument("--denoiser", default="hqdn3d", choices=["hqdn3d", "nlmeans"], help="denoiser (default: hqdn3d)")
@@ -116,6 +122,21 @@ def add_common(p: argparse.ArgumentParser):
     p.add_argument("--force", action="store_true", help="proceed even below the 8 GB RAM requirement")
     p.add_argument("--dry-run", action="store_true", help="print the ffmpeg command without running")
 
+    # AI Engine settings (NEW in v2)
+    ai_group = p.add_argument_group("AI Engine (v2)")
+    ai_group.add_argument("--ai-engine", default="mmagic", choices=AI_ENGINES,
+                          help="AI engine: mmagic (primary) | realesrgan (alternative) | off (default: mmagic)")
+    ai_group.add_argument("--ai-model", default="realesrgan-x4plus", metavar="MODEL",
+                          help="AI model name (see presets for options)")
+    ai_group.add_argument("--ai-scale", type=int, default=4, choices=[2, 4, 8],
+                          help="AI upscale factor (default: 4)")
+    ai_group.add_argument("--ai-tile", type=int, default=0,
+                          help="tile size for large images (0 = auto, default: 0)")
+    ai_group.add_argument("--ai-fp32", action="store_true",
+                          help="use FP32 instead of FP16 (more memory, more precision)")
+    ai_group.add_argument("--ai-gpu", type=int, default=0,
+                          help="GPU device ID (default: 0)")
+
 
 def settings_from_args(args) -> Settings:
     s = Settings()
@@ -136,6 +157,16 @@ def settings_from_args(args) -> Settings:
     s.hwaccel = args.hwaccel
     s.force = args.force
     s.extra_args = args.extra_args
+    s.process_mode = args.mode
+    
+    # AI Engine settings
+    s.ai_engine = args.ai_engine
+    s.ai_model = args.ai_model
+    s.ai_scale = args.ai_scale
+    s.ai_tile = args.ai_tile
+    s.ai_fp32 = args.ai_fp32
+    s.ai_gpu_id = args.ai_gpu
+    
     _parse_effects(args.effects, s)
     return s
 
@@ -441,8 +472,9 @@ def launch_tui() -> int:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="aitmeral",
-        description="AITMERAL — Video Enhancer, Upscaler & RAW Lossless Converter.\n"
-                    "Converts local files and links (YouTube & 1000+ sites) into RAW / lossless / HDR / max-compatibility output.",
+        description="AITMERAL v2 — AI Video/Image Enhancer, Upscaler & RAW Lossless Converter.\n"
+                    "Converts local files and links (YouTube & 1000+ sites) into RAW / lossless / HDR / max-compatibility output.\n"
+                    "AI Engines: MMagic (primary, open-mmlab/mmagic) + Real-ESRGAN (alternative, xinntao/Real-ESRGAN).",
         epilog=(
             "examples:\n"
             "  aitmeral                                   # interactive TUI\n"
@@ -450,6 +482,9 @@ def build_parser() -> argparse.ArgumentParser:
             "  aitmeral convert video.mp4 -S 1080p -p raw --effects denoise:2,sharpen:0.5\n"
             "  aitmeral url \"https://youtu.be/xyz\" -S 1080p -p lossless-x264 --quality 1080\n"
             "  aitmeral convert video.mp4 -p hdr10 --hdr -S 2160p          # SDR→HDR 4K\n"
+            "  aitmeral convert photo.jpg -p ai-mmagic-realesrgan-x4       # AI image upscale 4x\n"
+            "  aitmeral convert video.mp4 -p ai-mmagic-basicvsr-x4         # AI video upscale 4x\n"
+            "  aitmeral convert video.mp4 --ai-engine realesrgan --ai-model realesrgan-anime-x4  # Alternative engine\n"
             "  aitmeral doctor                            # check system requirements\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -457,9 +492,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-V", "--version", action="version", version=f"AITMERAL {__version__}")
     sub = p.add_subparsers(dest="command")
 
-    c = sub.add_parser("convert", help="enhance/upscale a local video file",
-                       description="Enhance, upscale and convert a local video file.", formatter_class=argparse.RawDescriptionHelpFormatter)
-    c.add_argument("input", help="input video file")
+    c = sub.add_parser("convert", help="enhance/upscale a local video or image file",
+                       description="Enhance, upscale and convert a local video or image file.", formatter_class=argparse.RawDescriptionHelpFormatter)
+    c.add_argument("input", help="input video or image file")
     c.add_argument("-o", "--output", default=None, help="output directory (default: same as input)")
     add_common(c)
     c.set_defaults(func=cmd_convert)

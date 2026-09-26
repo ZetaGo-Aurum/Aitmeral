@@ -22,7 +22,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 from aitmeral import __version__
 from aitmeral.core import downloader, media, sysinfo
 from aitmeral.core.jobs import ACTIVE, JobManager
-from aitmeral.core.options import Settings
+from aitmeral.core.options import Settings, AI_ENGINES, MMAGIC_MODELS, REALESRGAN_MODELS, PROCESS_MODES
 from aitmeral.core.presets import effect_summaries, preset_summaries
 
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
@@ -197,11 +197,23 @@ class Handler(BaseHTTPRequestHandler):
                     "caps": caps.brief(),
                     "output_dir": STATE.output_dir,
                     "uptime": int(time.time() - STATE.started),
+                    # AI Engine info
+                    "ai_engines": AI_ENGINES,
+                    "mmagic_models": MMAGIC_MODELS,
+                    "realesrgan_models": REALESRGAN_MODELS,
+                    "process_modes": PROCESS_MODES,
                 })
             elif path == "/api/presets":
                 self._json({"presets": preset_summaries()})
             elif path == "/api/effects":
                 self._json({"effects": effect_summaries()})
+            elif path == "/api/ai-models":
+                self._json({
+                    "engines": AI_ENGINES,
+                    "mmagic_models": MMAGIC_MODELS,
+                    "realesrgan_models": REALESRGAN_MODELS,
+                    "process_modes": PROCESS_MODES,
+                })
             elif path == "/api/jobs":
                 self._json({"jobs": [_job_public(j) for j in STATE.manager.list()]})
             elif path.startswith("/api/jobs/") and not path.endswith("/file"):

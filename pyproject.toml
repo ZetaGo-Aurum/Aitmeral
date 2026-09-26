@@ -4,15 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aitmeral-enhancer"
-version = "1.0.0"
-description = "AITMERAL — Video Enhancer, Upscaler & RAW Lossless Converter with modern TUI, CLI and local Web UI"
+version = "2.0.0"
+description = "AITMERAL v2 — AI Video/Image Enhancer, Upscaler & RAW Lossless Converter (mmagic + Real-ESRGAN + ffmpeg)"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "AITMERAL Project" }]
 keywords = [
   "video", "upscaler", "enhancer", "ffmpeg", "hdr", "sdr",
   "lossless", "raw", "yt-dlp", "tui", "textual", "web-ui",
+  "ai", "mmagic", "real-esrgan", "super-resolution", "image-enhancement"
 ]
 classifiers = [
   "Environment :: Console",
@@ -22,14 +23,38 @@ classifiers = [
   "Operating System :: Microsoft :: Windows",
   "Programming Language :: Python :: 3",
   "Topic :: Multimedia :: Video :: Conversion",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
   "rich>=13.0",
   "textual>=1.0",
+  "torch>=2.1",
+  "torchvision>=0.16",
+  "opencv-python>=4.8",
+  "pillow>=10.0",
+  "numpy>=1.24",
+  "tqdm>=4.66",
 ]
 
 [project.optional-dependencies]
 youtube = ["yt-dlp"]
+# Primary AI engine (mmagic)
+mmagic = [
+  "mmcv>=2.0.1",
+  "mmengine>=0.10",
+  "mmagic @ git+https://github.com/open-mmlab/mmagic.git@main",
+]
+# Alternative AI engine (Real-ESRGAN)
+realesrgan = [
+  "realesrgan @ git+https://github.com/xinntao/Real-ESRGAN.git@master",
+  "basicsr @ git+https://github.com/xinntao/BasicSR.git@master",
+  "facexlib @ git+https://github.com/xinntao/facexlib.git@master",
+  "gfpgan @ git+https://github.com/TencentARC/GFPGAN.git@master",
+]
+# All AI engines
+ai = ["mmagic", "realesrgan"]
+# Full install
+full = ["youtube", "mmagic", "realesrgan"]
 
 [project.scripts]
 aitmeral = "aitmeral.cli:main"
@@ -38,4 +63,4 @@ aitmeral = "aitmeral.cli:main"
 include = ["aitmeral*"]
 
 [tool.setuptools.package-data]
-aitmeral = ["web/static/*"]
+aitmeral = ["web/static/*", "ai_models/*"]

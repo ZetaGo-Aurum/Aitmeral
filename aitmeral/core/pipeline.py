@@ -1,4 +1,5 @@
-"""Conversion pipeline — shared by CLI, TUI queue and the web server."""
+"""Conversion pipeline — shared by CLI, TUI queue and the web server.
+Supports both traditional ffmpeg and AI-powered (mmagic, Real-ESRGAN) processing."""
 
 from __future__ import annotations
 
@@ -15,6 +16,7 @@ from aitmeral.core.media import MediaInfo, human_size
 from aitmeral.core.options import Settings
 from aitmeral.core.presets import get_preset
 from aitmeral.core.sysinfo import total_ram_gb
+from aitmeral.core.ai_engine import get_ai_engine, AIEngineBase, ProcessResult as AIProcessResult
 
 ReportFn = Callable[[str, float, str], None]  # (stage, fraction 0..1 or -1, detail)
 
@@ -36,6 +38,7 @@ class JobResult:
     command: list = field(default_factory=list)
     notes: list = field(default_factory=list)
     elapsed: float = 0.0
+    ai_metadata: dict = field(default_factory=dict)
 
     def summary(self) -> dict:
         oi = self.output_info
@@ -47,13 +50,26 @@ class JobResult:
             "output_res": oi.res if oi else "?",
             "output_vcodec": oi.vcodec if oi else "",
             "output_duration": oi.duration if oi else 0,
+            "ai_metadata": self.ai_metadata,
         }
 
 
 def sanitize_stem(path: str) -> str:
     stem = os.path.splitext(os.path.basename(path))[0]
-    stem = re.sub(r"[^\w.\- ]+", "_", stem).strip() or "video"
+    stem = re.sub(r"[^\w.\- ]+", "_", stem).strip() or "media"
     return stem[:70]
+
+
+def is_image_file(path: str) -> bool:
+    """Check if file is an image based on extension"""
+    ext = os.path.splitext(path)[1].lower()
+    return ext in (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tiff", ".tif", ".jxl", ".avif")
+
+
+def is_video_file(path: str) -> bool:
+    """Check if file is a video based on extension"""
+    ext = os.path.splitext(path)[1].lower()
+    return ext in (".mp4", ".mkv", ".mov", ".avi", ".webm", ".ts", ".mts", ".m2ts", ".flv", ".f4v", ".ogv", ".wmv", ".mpg", ".mpeg")
 
 
 def output_filename(src_path: str, s: Settings, fres, preset_key: str) -> str:
@@ -79,6 +95,155 @@ def unique_path(path: str) -> str:
     return path
 
 
+def run_ai_image_job(source: str, settings: Settings, output_dir: str,
+                     report: Optional[ReportFn] = None,
+                     cancel_event: Optional[threading.Event] = None,
+                     dry_run: bool = False) -> JobResult:
+    """Run AI image enhancement job"""
+    
+    def rep(stage: str, frac: float, detail: str = ""):
+        if report:
+            report(stage, frac, detail)
+
+    preset = get_preset(settings.preset)
+    ai_config = settings.get_ai_config()
+    
+    os.makedirs(output_dir, exist_ok=True)
+    t0 = time.time()
+    result = JobResult()
+    result.input_path = source
+
+    rep("probe", 0.0, "Analyzing image…")
+    info = media.probe(source)
+    result.source_info = info
+
+    out_name = output_filename(source, settings, type('obj', (object,), {'target_wh': None, 'hdr_expand': False})(), settings.preset)
+    out_path = unique_path(os.path.join(output_dir, out_name))
+    result.output_path = out_path
+
+    if dry_run:
+        result.command = ["aitmeral-ai", "image", source, out_path, str(ai_config)]
+        return result
+
+    rep("process", 0.0, f"AI enhancing with {ai_config['engine']} ({ai_config['model']})…")
+    
+    try:
+        engine = get_ai_engine(
+            engine=ai_config["engine"],
+            model=ai_config["model"],
+            scale=ai_config["scale"],
+            tile=ai_config["tile"],
+            fp32=ai_config["fp32"],
+            gpu_id=ai_config["gpu_id"],
+        )
+        
+        if not engine.load_model():
+            raise RuntimeError(f"Failed to load AI model: {ai_config['model']}")
+        
+        def ai_progress(frac, detail):
+            rep("process", frac, detail)
+        
+        ai_result: AIProcessResult = engine.enhance_image(source, out_path)
+        
+        if not ai_result.success:
+            raise RuntimeError(f"AI processing failed: {ai_result.error}")
+        
+        result.ai_metadata = ai_result.metadata or {}
+        
+    except Exception as e:
+        if os.path.exists(out_path):
+            try:
+                os.remove(out_path)
+            except OSError:
+                pass
+        raise encoder.EncodingError(f"AI image processing failed: {e}")
+
+    # Verify output
+    rep("finalize", 0.5, "Verifying output…")
+    out_info = media.probe(out_path)
+    result.output_info = out_info
+    if not out_info.ok or not os.path.isfile(out_path) or os.path.getsize(out_path) == 0:
+        raise encoder.EncodingError("Output verification failed — the file is missing or unreadable.")
+
+    result.elapsed = time.time() - t0
+    rep("done", 1.0, f"Done in {int(result.elapsed)}s → {os.path.basename(out_path)}")
+    return result
+
+
+def run_ai_video_job(source: str, settings: Settings, output_dir: str,
+                     report: Optional[ReportFn] = None,
+                     cancel_event: Optional[threading.Event] = None,
+                     dry_run: bool = False) -> JobResult:
+    """Run AI video enhancement job"""
+    
+    def rep(stage: str, frac: float, detail: str = ""):
+        if report:
+            report(stage, frac, detail)
+
+    ai_config = settings.get_ai_config()
+    
+    os.makedirs(output_dir, exist_ok=True)
+    t0 = time.time()
+    result = JobResult()
+    result.input_path = source
+
+    rep("probe", 0.0, "Analyzing video…")
+    info = media.probe(source)
+    result.source_info = info
+
+    out_name = output_filename(source, settings, type('obj', (object,), {'target_wh': None, 'hdr_expand': False})(), settings.preset)
+    out_path = unique_path(os.path.join(output_dir, out_name))
+    result.output_path = out_path
+
+    if dry_run:
+        result.command = ["aitmeral-ai", "video", source, out_path, str(ai_config)]
+        return result
+
+    rep("process", 0.0, f"AI enhancing video with {ai_config['engine']} ({ai_config['model']})…")
+    
+    try:
+        engine = get_ai_engine(
+            engine=ai_config["engine"],
+            model=ai_config["model"],
+            scale=ai_config["scale"],
+            tile=ai_config["tile"],
+            fp32=ai_config["fp32"],
+            gpu_id=ai_config["gpu_id"],
+        )
+        
+        if not engine.load_model():
+            raise RuntimeError(f"Failed to load AI model: {ai_config['model']}")
+        
+        def ai_progress(frac, detail):
+            rep("process", frac, detail)
+        
+        ai_result: AIProcessResult = engine.enhance_video(source, out_path, progress_callback=ai_progress)
+        
+        if not ai_result.success:
+            raise RuntimeError(f"AI processing failed: {ai_result.error}")
+        
+        result.ai_metadata = ai_result.metadata or {}
+        
+    except Exception as e:
+        if os.path.exists(out_path):
+            try:
+                os.remove(out_path)
+            except OSError:
+                pass
+        raise encoder.EncodingError(f"AI video processing failed: {e}")
+
+    # Verify output
+    rep("finalize", 0.5, "Verifying output…")
+    out_info = media.probe(out_path)
+    result.output_info = out_info
+    if not out_info.ok or not os.path.isfile(out_path) or os.path.getsize(out_path) == 0:
+        raise encoder.EncodingError("Output verification failed — the file is missing or unreadable.")
+
+    result.elapsed = time.time() - t0
+    rep("done", 1.0, f"Done in {int(result.elapsed)}s → {os.path.basename(out_path)}")
+    return result
+
+
 def run_job(kind: str,
             source: str,
             settings: Settings,
@@ -87,8 +252,11 @@ def run_job(kind: str,
             cancel_event: Optional[threading.Event] = None,
             proc_hook: Optional[Callable] = None,
             dry_run: bool = False) -> JobResult:
-    """kind: 'url' | 'file'. Raises RequirementError / CancelledError / EncodingError / DownloadError."""
-
+    """Main entry point: routes to appropriate processor based on mode and file type.
+    
+    kind: 'url' | 'file'
+    """
+    
     def rep(stage: str, frac: float, detail: str = ""):
         if report:
             report(stage, frac, detail)
@@ -104,8 +272,6 @@ def run_job(kind: str,
         rep("prepare", 0.0, f"Low-RAM override active ({ram:.2f} GB < {MIN_RAM_GB:.0f} GB) — quality/parity is preserved, speed may suffer.")
 
     os.makedirs(output_dir, exist_ok=True)
-    t0 = time.time()
-    result = JobResult()
 
     # ---- acquire source ---------------------------------------------------
     src_path = source
@@ -125,18 +291,61 @@ def run_job(kind: str,
         if not os.path.isfile(src_path):
             raise RequirementError(f"File not found: {src_path}")
 
-    result.input_path = src_path
+    # ---- Determine processing mode ----------------------------------------
+    is_image = is_image_file(src_path)
+    is_video = is_video_file(src_path)
+    
+    use_ai = settings.is_ai_mode()
+    
+    # Auto-detect process mode
+    if settings.process_mode == "auto":
+        if use_ai:
+            if is_image:
+                settings.process_mode = "image"
+            else:
+                settings.process_mode = "video"
+        else:
+            settings.process_mode = "video"  # traditional ffmpeg
+
+    # ---- Route to appropriate processor -----------------------------------
+    if use_ai:
+        if settings.process_mode == "image" or (settings.process_mode == "auto" and is_image):
+            return run_ai_image_job(src_path, settings, output_dir, report, cancel_event, dry_run)
+        else:
+            return run_ai_video_job(src_path, settings, output_dir, report, cancel_event, dry_run)
+
+    # ---- Traditional ffmpeg pipeline --------------------------------------
+    return run_ffmpeg_job(kind, src_path, settings, output_dir, report, cancel_event, proc_hook, dry_run)
+
+
+def run_ffmpeg_job(kind: str,
+                   source: str,
+                   settings: Settings,
+                   output_dir: str,
+                   report: Optional[ReportFn] = None,
+                   cancel_event: Optional[threading.Event] = None,
+                   proc_hook: Optional[Callable] = None,
+                   dry_run: bool = False) -> JobResult:
+    """Traditional ffmpeg-based processing"""
+    
+    def rep(stage: str, frac: float, detail: str = ""):
+        if report:
+            report(stage, frac, detail)
+
+    t0 = time.time()
+    result = JobResult()
+    result.input_path = source
 
     # ---- probe -------------------------------------------------------------
     rep("probe", 0.0, "Analyzing source…")
-    info = media.probe(src_path)
+    info = media.probe(source)
     if not info.ok and not dry_run:
         raise RequirementError(f"Could not analyze input: {info.error}")
     result.source_info = info
 
     # ---- build -------------------------------------------------------------
-    cmd, fres, notes = encoder.build_command(src_path, "UNUSED_PLACEHOLDER", settings, info if info.ok else None)
-    out_name = output_filename(src_path, settings, fres, settings.preset)
+    cmd, fres, notes = encoder.build_command(source, "UNUSED_PLACEHOLDER", settings, info if info.ok else None)
+    out_name = output_filename(source, settings, fres, settings.preset)
     out_path = unique_path(os.path.join(output_dir, out_name))
     cmd[cmd.index("UNUSED_PLACEHOLDER")] = out_path
     result.command = cmd
@@ -156,7 +365,6 @@ def run_job(kind: str,
         cancel_event=cancel_event, proc_hook=proc_hook,
     )
     if rc == -2:
-        # remove partial output
         try:
             if os.path.exists(out_path):
                 os.remove(out_path)
@@ -183,7 +391,7 @@ def run_job(kind: str,
     # ---- cleanup downloaded source ------------------------------------------
     if kind == "url" and not settings.keep_source:
         try:
-            os.remove(src_path)
+            os.remove(source)
         except OSError:
             pass
 

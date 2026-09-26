@@ -1,4 +1,5 @@
-"""Output presets — from true RAW/lossless to maximum-compatibility encodes."""
+"""Output presets — from true RAW/lossless to maximum-compatibility encodes.
+Includes AI-powered presets (mmagic, Real-ESRGAN) for v2."""
 
 from __future__ import annotations
 
@@ -10,8 +11,8 @@ class OutputPreset:
     key: str
     label: str
     desc: str
-    badge: str            # RAW | LOSSLESS | HDR | HQ | COMPAT
-    container: str        # mkv | mp4 | mov | y4m
+    badge: str            # RAW | LOSSLESS | HDR | HQ | COMPAT | AI
+    container: str        # mkv | mp4 | mov | y4m | png | jpg
     ext: str
     vcodec: str           # ffmpeg encoder name (for capability checks)
     args: tuple           # default ffmpeg args (video)
@@ -22,8 +23,13 @@ class OutputPreset:
     compat: int           # 1..5 — device playback compatibility
     size_note: str
     crf_default: int = 0  # 0 = N/A (lossless)
+    # AI-specific fields
+    ai_engine: str = ""   # mmagic | realesrgan | ""
+    ai_model: str = ""    # AI model name
+    ai_scale: int = 0     # AI upscale factor
 
 
+# Traditional ffmpeg presets
 PRESETS = {
     "raw": OutputPreset(
         key="raw",
@@ -130,6 +136,136 @@ PRESETS = {
         size_note="~40-150 MB per minute at 1080p.",
         crf_default=24,
     ),
+
+    # AI-Powered Presets (v2) - MMagic (Primary)
+    "ai-mmagic-realesrgan-x4": OutputPreset(
+        key="ai-mmagic-realesrgan-x4",
+        label="AI: MMagic RealESRGAN x4 (Primary)",
+        desc="OpenMMLab MMagic RealESRGAN 4x upscaling. Best for general video/image enhancement with artifact removal.",
+        badge="AI",
+        container="mp4", ext="mp4", vcodec="libx264",
+        args=("-c:v", "libx264", "-crf", "16", "-preset", "medium"),
+        pix_fmt="yuv420p", audio="auto", hdr_ready=False, lossless=False, compat=5,
+        size_note="~100-350 MB per minute at 1080p (after AI upscale).",
+        crf_default=16,
+        ai_engine="mmagic",
+        ai_model="realesrgan-x4",
+        ai_scale=4,
+    ),
+    "ai-mmagic-swinir-x4": OutputPreset(
+        key="ai-mmagic-swinir-x4",
+        label="AI: MMagic SwinIR x4",
+        desc="OpenMMLab MMagic SwinIR 4x — Transformer-based super-resolution. Excellent for detail recovery.",
+        badge="AI",
+        container="mp4", ext="mp4", vcodec="libx264",
+        args=("-c:v", "libx264", "-crf", "16", "-preset", "medium"),
+        pix_fmt="yuv420p", audio="auto", hdr_ready=False, lossless=False, compat=5,
+        size_note="~100-350 MB per minute at 1080p (after AI upscale).",
+        crf_default=16,
+        ai_engine="mmagic",
+        ai_model="swinir-x4",
+        ai_scale=4,
+    ),
+    "ai-mmagic-basicvsr-x4": OutputPreset(
+        key="ai-mmagic-basicvsr-x4",
+        label="AI: MMagic BasicVSR x4 (Video)",
+        desc="OpenMMLab MMagic BasicVSR 4x — Video super-resolution with temporal consistency. Best for video.",
+        badge="AI",
+        container="mp4", ext="mp4", vcodec="libx264",
+        args=("-c:v", "libx264", "-crf", "16", "-preset", "medium"),
+        pix_fmt="yuv420p", audio="auto", hdr_ready=False, lossless=False, compat=5,
+        size_note="~100-350 MB per minute at 1080p (after AI upscale).",
+        crf_default=16,
+        ai_engine="mmagic",
+        ai_model="basicvsr-x4",
+        ai_scale=4,
+    ),
+    "ai-mmagic-realbasicvsr-x4": OutputPreset(
+        key="ai-mmagic-realbasicvsr-x4",
+        label="AI: MMagic RealBasicVSR x4 (Video)",
+        desc="OpenMMLab MMagic RealBasicVSR 4x — Real-world video super-resolution. Handles compression artifacts.",
+        badge="AI",
+        container="mp4", ext="mp4", vcodec="libx264",
+        args=("-c:v", "libx264", "-crf", "16", "-preset", "medium"),
+        pix_fmt="yuv420p", audio="auto", hdr_ready=False, lossless=False, compat=5,
+        size_note="~100-350 MB per minute at 1080p (after AI upscale).",
+        crf_default=16,
+        ai_engine="mmagic",
+        ai_model="realbasicvsr-x4",
+        ai_scale=4,
+    ),
+
+    # AI-Powered Presets - Real-ESRGAN (Alternative)
+    "ai-realesrgan-x4plus": OutputPreset(
+        key="ai-realesrgan-x4plus",
+        label="AI: Real-ESRGAN x4plus (Alternative)",
+        desc="Real-ESRGAN 4x Plus — General purpose image/video super-resolution with face enhancement option.",
+        badge="AI",
+        container="mp4", ext="mp4", vcodec="libx264",
+        args=("-c:v", "libx264", "-crf", "16", "-preset", "medium"),
+        pix_fmt="yuv420p", audio="auto", hdr_ready=False, lossless=False, compat=5,
+        size_note="~100-350 MB per minute at 1080p (after AI upscale).",
+        crf_default=16,
+        ai_engine="realesrgan",
+        ai_model="realesrgan-x4plus",
+        ai_scale=4,
+    ),
+    "ai-realesrgan-anime-x4": OutputPreset(
+        key="ai-realesrgan-anime-x4",
+        label="AI: Real-ESRGAN Anime x4",
+        desc="Real-ESRGAN Anime 4x — Optimized for anime/cartoon content with clean lines.",
+        badge="AI",
+        container="mp4", ext="mp4", vcodec="libx264",
+        args=("-c:v", "libx264", "-crf", "16", "-preset", "medium"),
+        pix_fmt="yuv420p", audio="auto", hdr_ready=False, lossless=False, compat=5,
+        size_note="~100-350 MB per minute at 1080p (after AI upscale).",
+        crf_default=16,
+        ai_engine="realesrgan",
+        ai_model="realesrgan-anime-x4",
+        ai_scale=4,
+    ),
+    "ai-realesrgan-video-x4": OutputPreset(
+        key="ai-realesrgan-video-x4",
+        label="AI: Real-ESRGAN Video x4",
+        desc="Real-ESRGAN Video 4x — Optimized for video with temporal consistency.",
+        badge="AI",
+        container="mp4", ext="mp4", vcodec="libx264",
+        args=("-c:v", "libx264", "-crf", "16", "-preset", "medium"),
+        pix_fmt="yuv420p", audio="auto", hdr_ready=False, lossless=False, compat=5,
+        size_note="~100-350 MB per minute at 1080p (after AI upscale).",
+        crf_default=16,
+        ai_engine="realesrgan",
+        ai_model="realesrgan-video-x4",
+        ai_scale=4,
+    ),
+
+    # Image-only AI presets (output as PNG)
+    "ai-img-mmagic-x4": OutputPreset(
+        key="ai-img-mmagic-x4",
+        label="AI Image: MMagic x4 → PNG",
+        desc="OpenMMLab MMagic 4x image upscaling. Output as lossless PNG for maximum quality.",
+        badge="AI",
+        container="png", ext="png", vcodec="png",
+        args=("-c:v", "png", "-compression_level", "3"),
+        pix_fmt="rgba", audio="none", hdr_ready=False, lossless=True, compat=3,
+        size_note="Large — lossless PNG output.",
+        ai_engine="mmagic",
+        ai_model="realesrgan-x4",
+        ai_scale=4,
+    ),
+    "ai-img-realesrgan-x4": OutputPreset(
+        key="ai-img-realesrgan-x4",
+        label="AI Image: Real-ESRGAN x4 → PNG",
+        desc="Real-ESRGAN 4x image upscaling. Output as lossless PNG for maximum quality.",
+        badge="AI",
+        container="png", ext="png", vcodec="png",
+        args=("-c:v", "png", "-compression_level", "3"),
+        pix_fmt="rgba", audio="none", hdr_ready=False, lossless=True, compat=3,
+        size_note="Large — lossless PNG output.",
+        ai_engine="realesrgan",
+        ai_model="realesrgan-x4plus",
+        ai_scale=4,
+    ),
 }
 
 ALIASES = {
@@ -148,6 +284,17 @@ ALIASES = {
     "lossless": "lossless-x264",
     "best": "superhd",
     "web": "superhd",
+    # AI aliases
+    "ai": "ai-mmagic-realesrgan-x4",
+    "ai-mmagic": "ai-mmagic-realesrgan-x4",
+    "ai-realesrgan": "ai-realesrgan-x4plus",
+    "mmagic": "ai-mmagic-realesrgan-x4",
+    "realesrgan": "ai-realesrgan-x4plus",
+    "swinir": "ai-mmagic-swinir-x4",
+    "basicvsr": "ai-mmagic-basicvsr-x4",
+    "realbasicvsr": "ai-mmagic-realbasicvsr-x4",
+    "anime": "ai-realesrgan-anime-x4",
+    "video-ai": "ai-realesrgan-video-x4",
 }
 
 
@@ -163,8 +310,14 @@ def get_preset(key: str) -> OutputPreset:
 
 def preset_summaries() -> list:
     """Ordered summaries for --help / TUI / web UI."""
-    order = ["raw", "y4m", "lossless-x264", "lossless-x265", "prores4444", "dnxhr",
-             "hdr10", "hq-hevc", "superhd", "av1"]
+    order = [
+        "raw", "y4m", "lossless-x264", "lossless-x265", "prores4444", "dnxhr",
+        "hdr10", "hq-hevc", "superhd", "av1",
+        # AI presets
+        "ai-mmagic-realesrgan-x4", "ai-mmagic-swinir-x4", "ai-mmagic-basicvsr-x4", "ai-mmagic-realbasicvsr-x4",
+        "ai-realesrgan-x4plus", "ai-realesrgan-anime-x4", "ai-realesrgan-video-x4",
+        "ai-img-mmagic-x4", "ai-img-realesrgan-x4",
+    ]
     return [
         {
             "key": PRESETS[k].key,
@@ -176,8 +329,11 @@ def preset_summaries() -> list:
             "hdr_ready": PRESETS[k].hdr_ready,
             "compat": PRESETS[k].compat,
             "size_note": PRESETS[k].size_note,
+            "ai_engine": PRESETS[k].ai_engine,
+            "ai_model": PRESETS[k].ai_model,
+            "ai_scale": PRESETS[k].ai_scale,
         }
-        for k in order
+        for k in order if k in PRESETS
     ]
 
 
@@ -193,6 +349,12 @@ EFFECTS = [
     ("tone-map", "HDR→SDR Tone Map", "Maps HDR sources down to SDR gracefully (hable) for SDR-only devices."),
     ("fps", "Frame Rate", "Set output frame rate, optionally with motion-compensated interpolation (minterpolate) for smooth 60fps."),
     ("scale", "Upscale", "Lanczos/Spline scaling to 720p/1080p/1440p/4K, 2x/4x factors, or pixel-art XBR scaling."),
+    # AI Effects
+    ("ai-upscale", "AI Upscale", "AI-powered super-resolution using MMagic (primary) or Real-ESRGAN (alternative). 2x/4x/8x scaling with artifact removal."),
+    ("ai-face-enhance", "AI Face Enhance", "GFPGAN/CodeFormer face restoration for old/low-quality footage with faces."),
+    ("ai-colorize", "AI Colorize", "DDColor/DeOldify automatic colorization of B&W footage."),
+    ("ai-denoise", "AI Denoise", "AI-based denoising (Real-ESRGAN denoise mode, MMagic denoisers) — superior to traditional filters."),
+    ("ai-interpolate", "AI Frame Interpolation", "RIFE/FLAVR AI frame interpolation for smooth slow-motion (better than minterpolate)."),
 ]
 
 

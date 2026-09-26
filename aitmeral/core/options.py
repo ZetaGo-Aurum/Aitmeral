@@ -17,6 +17,18 @@ QUALITY_MODES = ["best", "2160", "1440", "1080", "720", "480"]
 SCALE_MODES = ["source", "2x", "4x", "480p", "720p", "1080p", "1440p", "2160p"]
 HWACCEL_MODES = ["auto", "off", "cuda", "nvenc", "nvidia", "qsv", "intel", "quicksync", "vaapi", "amf", "amd", "videotoolbox", "vt", "apple", "macos"]
 
+# AI Engine settings
+AI_ENGINES = ["mmagic", "realesrgan", "off"]
+MMAGIC_MODELS = [
+    "realesrgan-x4", "realesrgan-x2", "esrgan-x4", 
+    "swinir-x4", "basicvsr-x4", "iconvsr-x4", "realbasicvsr-x4"
+]
+REALESRGAN_MODELS = [
+    "realesrgan-x4plus", "realesrgan-x2plus",
+    "realesrgan-anime-x4", "realesrgan-video-x4"
+]
+PROCESS_MODES = ["video", "image", "auto"]
+
 
 def _clamp(v, lo, hi):
     return max(lo, min(hi, v))
@@ -50,35 +62,47 @@ def _to_float(v, default=0.0):
 class Settings:
     """All user-tunable enhancement settings (serializable to/from a plain dict)."""
 
+    # Processing mode
+    process_mode: str = "auto"       # video | image | auto
+    
+    # Traditional ffmpeg settings
     preset: str = "superhd"
-    scale: str = "source"        # source | 2x | 4x | 480p | 720p | 1080p | 1440p | 2160p | WxH
+    scale: str = "source"            # source | 2x | 4x | 480p | 720p | 1080p | 1440p | 2160p | WxH
     scaler: str = "lanczos"
-    denoise: int = 0             # 0=off, 1=light, 2=medium, 3=strong
-    denoiser: str = "hqdn3d"     # hqdn3d | nlmeans
-    sharpen: float = 0.35        # 0.0..1.0 — CAS / unsharp strength
-    shader: str = "cas"          # cas | unsharp | none
+    denoise: int = 0                 # 0=off, 1=light, 2=medium, 3=strong
+    denoiser: str = "hqdn3d"         # hqdn3d | nlmeans
+    sharpen: float = 0.35            # 0.0..1.0 — CAS / unsharp strength
+    shader: str = "cas"              # cas | unsharp | none
     deband: bool = False
     deblock: bool = False
     deinterlace: bool = False
-    grain: int = 0               # 0..12 film grain
-    saturation: float = 1.0      # 0.5..2.0
-    contrast: float = 1.0        # 0.5..2.0
-    gamma: float = 1.0           # 0.5..2.0
-    brightness: float = 0.0      # -0.3..0.3
-    hdr: bool = False            # SDR -> HDR expansion (10-bit + PQ/BT.2020 signaling)
-    tone_map: str = "auto"       # auto | hdr2sdr | off  (HDR source handling)
+    grain: int = 0                   # 0..12 film grain
+    saturation: float = 1.0          # 0.5..2.0
+    contrast: float = 1.0            # 0.5..2.0
+    gamma: float = 1.0               # 0.5..2.0
+    brightness: float = 0.0          # -0.3..0.3
+    hdr: bool = False                # SDR -> HDR expansion (10-bit + PQ/BT.2020 signaling)
+    tone_map: str = "auto"           # auto | hdr2sdr | off  (HDR source handling)
     fps: str = "source"
-    motion_interp: bool = False  # motion-compensated interpolation (slow)
-    audio: str = "auto"          # auto | copy | flac | pcm | aac
-    chroma: str = "auto"         # auto | 420 | 422 | 444 | rgb
-    depth: str = "auto"          # auto | 8 | 10 | 12
-    quality: str = "best"        # download quality for URLs
-    crf: int = 0                 # 0 = use preset default; 14..28 for lossy presets
-    threads: int = 0             # 0 = auto (use all cores)
-    hwaccel: str = "auto"        # auto | off | cuda | qsv | vaapi | amf | videotoolbox
-    keep_source: bool = True     # keep the downloaded source file
-    force: bool = False          # bypass the 8 GB RAM requirement
-    extra_args: str = ""         # raw extra ffmpeg args (advanced)
+    motion_interp: bool = False      # motion-compensated interpolation (slow)
+    audio: str = "auto"              # auto | copy | flac | pcm | aac
+    chroma: str = "auto"             # auto | 420 | 422 | 444 | rgb
+    depth: str = "auto"              # auto | 8 | 10 | 12
+    quality: str = "best"            # download quality for URLs
+    crf: int = 0                     # 0 = use preset default; 14..28 for lossy presets
+    threads: int = 0                 # 0 = auto (use all cores)
+    hwaccel: str = "auto"            # auto | off | cuda | qsv | vaapi | amf | videotoolbox
+    keep_source: bool = True         # keep the downloaded source file
+    force: bool = False              # bypass the 8 GB RAM requirement
+    extra_args: str = ""             # raw extra ffmpeg args (advanced)
+
+    # AI Engine settings (NEW in v2)
+    ai_engine: str = "mmagic"        # mmagic | realesrgan | off
+    ai_model: str = "realesrgan-x4plus"  # model name
+    ai_scale: int = 4                # 2, 4, 8
+    ai_tile: int = 0                 # tile size (0 = auto)
+    ai_fp32: bool = False            # use fp32 instead of fp16
+    ai_gpu_id: int = 0               # GPU device ID
 
     # ------------------------------------------------------------------ io
     @staticmethod
@@ -92,6 +116,7 @@ class Settings:
                 continue
             setattr(s, key, value)
 
+        # Traditional settings
         s.preset = str(s.preset).strip().lower() or "superhd"
         s.scale = str(s.scale or "source").strip().lower()
         s.scaler = str(s.scaler).strip().lower() if str(s.scaler).strip().lower() in SCALERS else "lanczos"
@@ -121,6 +146,17 @@ class Settings:
         s.keep_source = _to_bool(s.keep_source, True)
         s.force = _to_bool(s.force)
         s.extra_args = str(s.extra_args or "").strip()
+
+        # Process mode
+        s.process_mode = str(s.process_mode).strip().lower() if str(s.process_mode).strip().lower() in PROCESS_MODES else "auto"
+
+        # AI Engine settings
+        s.ai_engine = str(s.ai_engine).strip().lower() if str(s.ai_engine).strip().lower() in AI_ENGINES else "mmagic"
+        s.ai_model = str(s.ai_model).strip().lower()
+        s.ai_scale = _clamp(_to_int(s.ai_scale, 4), 1, 8)
+        s.ai_tile = _clamp(_to_int(s.ai_tile, 0), 0, 2048)
+        s.ai_fp32 = _to_bool(s.ai_fp32)
+        s.ai_gpu_id = _clamp(_to_int(s.ai_gpu_id, 0), 0, 7)
         return s
 
     def to_dict(self) -> dict:
@@ -158,19 +194,46 @@ class Settings:
         except (TypeError, ValueError):
             return None
 
+    def is_ai_mode(self) -> bool:
+        return self.ai_engine != "off"
+
+    def is_image_mode(self) -> bool:
+        if self.process_mode == "image":
+            return True
+        if self.process_mode == "auto":
+            # Auto-detect based on input (will be set at runtime)
+            return False
+        return False
+
+    def get_ai_config(self) -> dict:
+        """Get AI engine configuration as dict"""
+        return {
+            "engine": self.ai_engine,
+            "model": self.ai_model,
+            "scale": self.ai_scale,
+            "tile": self.ai_tile,
+            "fp32": self.ai_fp32,
+            "gpu_id": self.ai_gpu_id,
+        }
+
     def describe(self) -> str:
         bits = [f"preset={self.preset}"]
-        if self.scale and self.scale != "source":
-            bits.append(f"scale={self.scale}")
-        if self.denoise:
-            bits.append(f"denoise={self.denoise}({self.denoiser})")
-        if self.shader != "none" and self.sharpen > 0:
-            bits.append(f"{self.shader}={self.sharpen}")
-        for flag in ("deband", "deblock", "deinterlace", "hdr", "motion_interp"):
-            if getattr(self, flag):
-                bits.append(flag)
-        if self.grain:
-            bits.append(f"grain={self.grain}")
-        if any(abs(v - 1.0) > 0.001 for v in (self.saturation, self.contrast, self.gamma)) or abs(self.brightness) > 0.001:
-            bits.append("color")
+        if self.process_mode != "auto":
+            bits.append(f"mode={self.process_mode}")
+        if self.is_ai_mode():
+            bits.append(f"ai={self.ai_engine}:{self.ai_model}x{self.ai_scale}")
+        else:
+            if self.scale and self.scale != "source":
+                bits.append(f"scale={self.scale}")
+            if self.denoise:
+                bits.append(f"denoise={self.denoise}({self.denoiser})")
+            if self.shader != "none" and self.sharpen > 0:
+                bits.append(f"{self.shader}={self.sharpen}")
+            for flag in ("deband", "deblock", "deinterlace", "hdr", "motion_interp"):
+                if getattr(self, flag):
+                    bits.append(flag)
+            if self.grain:
+                bits.append(f"grain={self.grain}")
+            if any(abs(v - 1.0) > 0.001 for v in (self.saturation, self.contrast, self.gamma)) or abs(self.brightness) > 0.001:
+                bits.append("color")
         return " ".join(bits)
