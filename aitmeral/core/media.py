@@ -14,11 +14,19 @@ VIDEO_EXTS = {
     ".mp4", ".mkv", ".mov", ".avi", ".webm", ".flv", ".ts", ".m2ts", ".mts",
     ".m4v", ".mpg", ".mpeg", ".wmv", ".3gp", ".vob", ".ogv", ".mxf", ".m2v", ".y4m",
 }
+IMAGE_EXTS = {
+    ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tiff", ".tif", ".avif", ".jxl", ".gif",
+}
+ALL_MEDIA_EXTS = VIDEO_EXTS | IMAGE_EXTS
 HDR_TRANSFERS = {"smpte2084", "arib-std-b67"}
 
 
+def is_image_file(path: str) -> bool:
+    return os.path.splitext(path)[1].lower() in IMAGE_EXTS
+
+
 def is_media_file(path: str) -> bool:
-    return os.path.splitext(path)[1].lower() in VIDEO_EXTS
+    return os.path.splitext(path)[1].lower() in ALL_MEDIA_EXTS
 
 
 def human_size(n) -> str:
